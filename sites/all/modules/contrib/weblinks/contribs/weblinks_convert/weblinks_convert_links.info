@@ -1,0 +1,13 @@
+name = Web Links Convert Links Package
+description = Allows users to convert Links package to Web Links.
+dependencies[] = weblinks
+dependencies[] = links
+core = 7.x
+package = Weblinks
+
+; Information added by drupal.org packaging script on 2013-06-25
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "weblinks"
+datestamp = "1372128444"
+

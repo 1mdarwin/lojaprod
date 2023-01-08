@@ -1,0 +1,84 @@
+<?php
+define('IP_GIMSYS', '192.168.1.151'); // PROD
+define('RESOURCES_CATASTRO','/gim/seam/resource/rest/cadaster/');
+//define('USER_GIM','dabetancourtc');
+//define('PASS_GIM','Loja.2016.IML');
+define('PORT_WS', ':8080'); // PROD
+define('AUTH_PARAM', 'munpayclub:bfc2b6f7-9eea-4368-9cb0-cde8e2da37f7'); // user:pass
+#define('AUTH_PARAM', 'dabetancourtc:Loja.2016.IML'); // user:pass
+// RESOUCES_CATASTRO + CED
+// RESOURCES_CATASTRO + 'property/' + CODE
+//define('PROPERTY_BY_CODE','/gim/seam/resource/rest/cadaster/property/23822');
+
+/**
+ * HOOK MENU
+ */
+function cktastral_menu(){
+  $items = array();
+  $items['ktastro/consulta'] = array(
+    'title' => t('Consulta de Cédula Catastral'),
+    'description' => t('Permite la consulta de catastro por numero de cedula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('catastro_form'),
+    'access callback' => 'user_access',
+    //'access callback' => TRUE,
+    'access arguments' => array('administer consultar'),
+    'file' => 'cktastral.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['ktastro/test'] = array(
+    'title' => t('Test de la consulta'),
+    'description' => t('Test for cktastral custom module'),
+    'page callback' => 'test_page_ktastro',
+    'access callback' => true,
+    'file' => 'cktastral.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['ktastro/codes'] = array(
+    'title' => t('Códigos de Propiedades'),
+    'description' => t('Test for cktastral custom module'),
+    'page callback' => 'show_table_codes',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer codes'),
+    'file' => 'cktastral.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['ktastro/code/%'] = array(
+    'title' => t('Cédula catastral'),
+    'description' => t('Test for cktastral custom module'),
+    'page callback' => 'show_property',
+    'page arguments' => array(1),
+    'access callback' => true,
+    'file' => 'cktastral.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['ktastro/code/%/pdf'] = array(
+    'title' => t('Descarga PDF'),
+    'description' => t('Test for cktastral custom module'),
+    'page callback' => 'imprime_cktastral',
+    'page arguments' => array(1),
+    'access callback' => true,
+    'file' => 'cktastral.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+/**
+* HOOK permission
+* Allow to access to URL if it has permission
+*/
+function cktastral_permission(){
+  return array(
+    'administer consultar' => array(
+      'title' => t('Acceso consulta cedula catastral'),
+      'description' => t('Permitir consultar cedula catastral'),
+      ),    
+    'administer codes' => array(
+      'title' => t('Acceso a codes de propiedad'),
+      'description' => t('Permitir acceso a códigos de propiedad'),
+      ),     
+    );
+}
+
+
+

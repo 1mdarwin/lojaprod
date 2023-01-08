@@ -1,0 +1,68 @@
+<?php
+/**
+* HOOK_user_login
+* Show PopUp after the user log in
+*/
+function popupmsg_user_login(&$edit, $account){
+	setcookie("user","userlogin");   
+}
+/**
+* HOOK_init
+*/
+function popupmsg_init(){
+    global $user;
+    $account = user_load($user->uid);
+//    dsm($account);
+    //$nombres = $account->field_user_firstname['und'][0]['value'].$account->field_user_lastname['und'][0]['value'];
+//    $nombres = $account->field_user_full['und'][0]['value'];
+    if(user_is_logged_in()){ //Check if user is logged
+        
+    	$path = drupal_get_path('module', 'popupmsg');
+    	drupal_add_css($path . '/css/popupmsg.css');
+        $logo = "<img src='" .$path. "/images/logoiml.png'>";    
+    	$message = '<h2>Bienvenido</h2>'. $user->name . '<br> Al Municipio de Loja';
+    	drupal_add_js(
+         array(
+            'popupmsg' => array(
+                //'login_title' => variable_get('login_popup_title', 'Lorem ipsum dolor sit amet'),
+                'message' => $message,
+                'logo' => $logo,)
+                ),
+            
+            'setting'
+        );
+    }
+    //drupal_add_js(drupal_get_path('module', 'popupmsg') . '/js/popupmsg.js');
+}
+/**
+* HOOK_preprocess_html
+*/
+function popupmsg_preprocess_html(&$vars) {
+	if(isset($_COOKIE["user"])){        
+        drupal_add_js(drupal_get_path('module', 'popupmsg') . '/js/popupmsg.js');
+    }
+    // Expira la cookie
+    setcookie("user","userlogin",time()-1);
+}
+
+/**
+ * HOOK_user_login
+ * This hook control when a user was created
+ * **/
+function popupmsg_user_insert(&$edit, $account, $category) {
+    drupal_set_message(t('Se creo un usuario'), 'status', FALSE);
+    $path = drupal_get_path('module', 'popupmsg');
+    drupal_add_css($path . '/css/popupmsg.css');
+    $logo = "<img src='" .$path. "/images/logoiml.png'>";    
+    $message = '<h2>Gracias por registrarse</h2> Al Municipio de Loja';
+    drupal_add_js(
+        array(
+           'popupmsg' => array(
+            //'login_title' => variable_get('login_popup_title', 'Lorem ipsum dolor sit amet'),
+            'message' => $message,
+            'logo' => $logo,)
+        ),
+        'setting'
+    );
+    drupal_add_js(drupal_get_path('module', 'popupmsg') . '/js/popupmsg.js');
+}

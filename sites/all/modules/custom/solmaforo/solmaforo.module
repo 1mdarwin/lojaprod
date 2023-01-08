@@ -1,0 +1,54 @@
+<?php
+function solmaforo_help($path, $arg){
+	$help = '';
+	switch ($path) {
+		case 'admin/help#solmaforo':
+			$help = "<h1>Información de impacto del sol a través del webservice de Solmaforo</h1>";
+			$help .= t('This module is for get taxes from citizens</br>');
+			$help .= t('This module work with two webservices, from GIM and AGP systems</br>');
+			$help .= t('Include payments too');
+			break;
+		default:
+      	# code...
+      	break;
+  	}
+  	return $help;
+}
+/**
+* HOOK Menu
+*/
+function solmaforo_menu(){
+	$items['solmaforo'] = array(
+		'title' => t('Solmaforo - Indicador de radiación ultravioleta'),
+		'description' => t('Solmaforo'),
+		'page callback' => 'get_press',
+		'access callback' => true,
+		'type' => MENU_NORMAL_ITEM,
+		'file' => 'solmaforo.inc',
+	);
+	return $items;
+}
+/**
+* HOOK theme 
+* Call the HTML file
+*/
+function solmaforo_theme(){
+    $themes = array();
+    $themes['chart'] = array(
+        'template' => 'theme/chart',
+        'parameters' => array(),
+    );
+    return $themes;
+}
+/**
+*  HOOK_chart_alter
+*/
+function solmaforo_chart_alter(&$chart, $chart_id) {
+  //dsm("hola mundo aqui desde el hook _chart_alter");
+  if ($chart_id === 'solmaforo') {
+    // Individual properties may be modified.  	
+  	$chart['#title'] = t('Solmaforo en pruebas');
+   $chart['#title_font_size'] = 40;
+   $chart['#legend_title'] = t('Leyenda');   
+  }
+}

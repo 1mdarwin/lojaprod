@@ -1,0 +1,192 @@
+<?php
+
+include_once("TripleDESEncryption.php");
+include_once("RSAEncryption.php");
+include_once("Utilitario.php");
+
+class PlugInClientConciliacion
+{
+
+	var $ivVector;
+	var $key;
+	var $rucPrincipal;
+	var $sourceDescription;
+	var $idGrupo;
+	var $urlServicio;
+	
+	var $httpProxySet;
+	var $httpProxyHost; 
+	var $httpProxyPort; 
+	
+	var $respCodigo;
+	var $respDescripcion;
+	var $respDetalleAdicional;
+	
+	function getIvVector() {
+		return $this->ivVector;
+	}
+	function setIvVector($ivVector) {
+		$this->ivVector = $ivVector;
+	}
+	function getKey() {
+		return key;
+	}
+	function setKey($key) {
+		$this->key = $key;
+	}
+	function getRucPrincipal() {
+		return $this->rucPrincipal;
+	}
+	function setRucPrincipal($rucPrincipal) {
+		$this->rucPrincipal = $rucPrincipal;
+	}
+	function getSourceDescription() {
+		return $this->sourceDescription;
+	}
+	function setSourceDescription($sourceDescription) {
+		$this->sourceDescription = $sourceDescription;
+	}
+	
+	/*public void setArchivo(String archivo) {
+		this.archivo = archivo;
+	}*/
+	function getIdGrupo() {
+		return $this->idGrupo;
+	}
+	function setIdGrupo($idGrupo) {
+		$this->idGrupo = $idGrupo;
+	}
+	function getUrlServicio() {
+		return $this->urlServicio;
+	}
+	function setUrlServicio($urlServicio) {
+		$this->urlServicio = $urlServicio;
+	}
+	function isHttpProxySet() {
+		return $this->httpProxySet;
+	}
+	function getHttpProxyHost() {
+		return $this->httpProxyHost;
+	}
+	function getHttpProxyPort() {
+		return $this->httpProxyPort;
+	}
+	function setHttpProxy($httpProxySet, $httpProxyHost, $httpProxyPort)
+	{
+		$this->httpProxySet = $httpProxySet;
+		$this->httpProxyHost = $httpProxyHost;
+		$this->httpProxyPort = $httpProxyPort;
+	}
+	
+	function getRespCodigo() {
+		return $this->respCodigo;
+	}
+	
+	function getRespDescripcion() {
+		return $this->respDescripcion;
+	}
+
+	function getRespDetalleAdicional() {
+		return $this->respDetalleAdicional;
+	}
+	
+	function PlugInClientConciliacion() {
+		$this->httpProxySet = false;
+		$this->httpProxyHost = ""; 
+		$this->httpProxyPort = ""; 
+	}
+	
+	function conciliar($archivo)
+	{
+		$sbResp = "";
+		try
+		{
+			//echo "Archivo:<br>" . $archivo . "<br><br>";
+			//obtener fecha y hora GMT
+			date_default_timezone_set('GMT');
+			$fecha = date('Ymd;His');
+			
+			//cifrar trama
+			$cadena = "2;" . $fecha . ";" . $this->idGrupo;
+			$des3 = new TripleDESEncryption();
+			$cadena = $des3->encrypt($cadena, $this->key, $this->ivVector);
+			
+			//comprimir archivo
+			$archivoZip = $this->zip($archivo);
+			//echo "Archivo zip:<br>" . $archivoZip . "<br><br>";
+			
+			$parametros = "TP="    . urlencode("02") .
+                          "&TR="   . urlencode($cadena) .
+                          "&RUC="  . urlencode($this->getRucPrincipal()) .
+                          "&URLT=" . urlencode($this->getSourceDescription()) .
+                          "&file=" . urlencode($archivoZip);
+			
+			//comunicación
+			$strResp = $this->sendRequest($this->urlServicio, $parametros);
+			
+			//obtiene respuesta
+			$dato = "";
+			$datos = explode("=" , $strResp);
+			if(count($datos) == 2)
+			{
+				$dato = $datos[1];
+			}
+			else
+			{
+				$dato = "";
+			}
+			if ("RESPUESTA" == strtoupper($datos[0]))
+			{
+				$resp =  explode(";", $dato); 
+				$this->respCodigo = $resp[0];
+				$this->respDescripcion = $resp[1];
+				if(count($resp) > 2)
+		                        $this->respDetalleAdicional = $resp[2];
+			}
+			else
+			{
+				$this->respCodigo = "ERR";
+				$this->respDescripcion = "SIN RESPUESTA ESPERADA";
+			}			
+			
+		}
+		catch (Exception $e) 
+		{
+			throw $e;
+		}
+
+		return $sbResp;
+		
+	}
+	
+	function zip($cadena)
+	{
+		return base64_encode(gzdeflate($cadena, 9));
+	}
+	
+	function sendRequest($surl, $parametros)
+	{
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $surl);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0); 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false );  
+		curl_setopt($ch, CURLOPT_POST , true);			
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $parametros);	
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:'));
+ 
+		if ($this->httpProxySet)
+		{
+			curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 0);
+			curl_setopt($ch, CURLOPT_PROXY, $this->httpProxyHost . ":" . $this->httpProxyPort);
+		}
+		$rep = curl_exec ($ch); 
+		//echo "Respuesta: " . $rep;
+		//print_r(curl_getinfo($ch));
+		curl_close($ch);
+		return $rep;
+	}
+}
+?>

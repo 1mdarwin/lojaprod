@@ -1,0 +1,780 @@
+<?php
+// 1100048451 varios medidores
+//
+
+$ced = '';
+$dataws = array();
+$cliente = '';
+$sum = 0;
+$bondIds = array();
+
+function consulta_form($form, &$form_state){  
+  if(isset($_SESSION['dataws'])){
+    unset($_SESSION['dataws']);
+  }
+  $form['consulta'] = array(
+      '#title' => t('Datos del abonado'),
+      '#type' => 'fieldset',
+      '#description' => t('Consulta a través de su cédula')
+  );
+  $form['consulta']['cedula'] = array(
+      '#title' => t('Número de cédula'),
+      '#type' => 'textfield',
+      '#required' => true,
+      '#maxlenght' => 10,
+      '#size' => 15,
+      '#description' => t('Your ID have to 10 characters'),
+	);
+  $form['consulta']['captcha'] = array(
+    '#type' =>  'captcha',
+    '#captcha_type' =>  'recaptcha/reCAPTCHA',
+    //'#captcha_type' =>  'captcha/Math',
+    //'#captcha_type' =>  'image_captcha/Image',    
+  );
+  $form['#action'] = 'https://www.loja.gob.ec/consulta/res';
+  //$form['#action'] = 'https://www.loja.gob.ec/consulta/resultado';
+  $form['#attached']['js'] = array(drupal_get_path('module','impuestos').'/js/impuestos.js',);
+  $form['consulta']['save'] = array(
+      '#prefix' => '<div class="consulta">',
+      '#type' => 'submit',
+      '#value' => t('Consultar'),
+      '#suffix' => '</div>',
+  );  
+  return $form;
+}
+/*
+ * Function for validate consulta_form 
+ */
+function consulta_form_validate(&$form, &$form_state){
+  $cedula = $form_state['values']['cedula'];
+  if(strlen($cedula) < 10 ||(strlen($cedula) > 13) || !is_numeric($cedula)){
+    form_set_error('cedula', t('Debe digitar un número de cedula valido'));
+  }
+}
+/*
+ * Function for submit consulta_form
+ */  
+function consulta_form_submit(&$form, &$form_state){  
+//  variable_set('ced1',$form_state['values']['cedula']);
+  $_SESSION['ced'] = $form_state['values']['cedula'];
+  unset($_SESSION['firstName']);
+  unset($_SESSION['dataws']);
+  $_SESSION['dataws'] = '';
+  if(module_exists('impuestos')){
+    //$form_state['redirect'] = 'consulta/res';
+  }  
+}
+/**
+ * Function for resultado from consulta
+ * This function display data in a table under the url resultado
+ *  @return
+ *     (String) With data
+ */
+function resultado_page(){  
+//  $ced = variable_get('ced1'); // get variable from form
+  if(empty($_POST)){
+    return drupal_goto('https://www.loja.gob.ec/consulta');
+  }
+  $ced = $_POST['cedula'];
+  $result = _ws_impuesto($ced); // call function
+  
+  $suma = 0;  // save sum values
+  $par = 0;   // Control class table "even" and "odd" for TR element
+  $adeuda = false; // If the customer has debt  
+  $alltaxes = array(); // Store all values taxes in one array
+  $sc = '';
+  if(!empty($result)){
+    $sc = "<strong>C&eacute;dula:</strong> " . $result->return->taxpayer->identificationNumber."</br>";
+    $sc .= "<strong>Nombre:</strong> " . $result->return->taxpayer->firstName."</br>";
+    $sc .= "<table border=1><tbody>";
+    $sc .="<tr><th>Cod Servicio</th><th>Rubro</th><th>Fecha Emisión</th><th>Fecha Expiración</th><th>Total</th><tr>";
+    $sc .= "</thead><tbody>";
+    watchdog('impuestos','Consulta realizada para: ced',array('ced'=> $ced),WATCHDOG_DEBUG);
+    
+    if(isset($result->return->bonds)){
+      $adeuda = TRUE;
+      // Get size of array
+      $lengthB = sizeof($result->return->bonds);
+
+      // if array have just one element      
+      if($lengthB == 1){
+        $suma = $suma + (float)$result->return->bonds->total;        
+        $sc .= '<tr class="odd"><td>'.$result->return->bonds->serviceCode.'</td>'
+        . "<td>". $result->return->bonds->account ."</td>"
+        . "<td>". substr($result->return->bonds->serviceDate, 0, 10)."</td>"
+        . "<td>". substr($result->return->bonds->expirationDate, 0, 10) ."</td>"
+        . '<td class="valor">$'. $result->return->bonds->total ."</td></tr>";
+
+      }
+      // More than one element
+      else{
+        for($i=0; $i<$lengthB; $i++){
+          // Set a clase for tr element with even or odd
+          $tr = ($par % 2 ? '<tr class="even">' : '<tr class="odd">');
+          $suma = $suma + (float)$result->return->bonds[$i]->total; 
+          $sc .= $tr."<td>".substr($result->return->bonds[$i]->serviceCode,0,15)."</td>"
+          . "<td>". $result->return->bonds[$i]->account ."</td>"     
+          . "<td>". substr($result->return->bonds[$i]->serviceDate, 0, 10)."</td>"
+          . "<td>". substr($result->return->bonds[$i]->expirationDate, 0, 10) ."</td>"
+          . "<td>$". $result->return->bonds[$i]->total ."</td></tr>";
+        }        
+      }// End else      
+      
+    }else{    
+      $sc .= "<h2>No adeuda valores</h2>";
+    }
+    $sc .= '<tr class="totales"><td></td><td></td><td></td><td><strong>Total</strong></td><td class="valor"><strong>$'. (float)$suma ."</strong></td></tr>";
+    
+    $sc .= "</tbody></table>";
+    $sc .= '<a href="/consulta">Nueva consulta</a>';
+  }else{
+   $sc .= "<h2>Verifique su número de cédula, NO EXISTE en el sistema</h2>";
+   $sc .= "<div>Acerquese al departamento de inform&aacute;tica para realizar la actualizaci&oacute;n</div>";
+   $sc .= '<a href="/consulta">Nueva consulta</a>';
+  }
+   
+  return $sc;
+}
+/**
+* Get taxes from webservices GIM and AGP systems
+* @param $ced
+*   (integer) ID from from citizens
+* @return $alltaxes
+*   (array) Return only one array with all values got from webservices
+*/
+function _getDataWebs($ced){    
+  if( empty($_POST['g-recaptcha-response'])){
+	dsm('captcha vacio');
+  }
+  if(empty($ced)|| !is_numeric($ced) || strlen($_POST['g-recaptcha-response'])==0){
+    return drupal_goto('https://www.loja.gob.ec/consulta');
+  }
+
+//  $ced = variable_get('ced1');
+  $result = array();
+
+  $result = _ws_impuesto($ced); // call function from webservice
+  // $query = ws_emaalep($ced);
+  $ipadd = $_SERVER['REMOTE_ADDR'];
+  
+  $suma = 0;  // save sum values
+  $par = 1;   // Control class table "even" and "odd" for TR element  
+  $alltaxes = array(); // Store all values taxes in only one array 
+
+  if(isset($result)){ 
+    $ced = $result->return->taxpayer->identificationNumber;
+    $_SESSION['firstName'] = (isset($result->return->taxpayer->firstName) ? $result->return->taxpayer->firstName : "");
+//    $_SESSION['firstName'] = $result->return->taxpayer->firstName;
+    watchdog('impuestos','Consulta para: ced desde ipadd',array('ced'=> $ced, 'ipadd' => $ipadd),WATCHDOG_DEBUG);
+
+    
+    if(isset($result->return->bonds)){          
+      // Get size from array
+      $lengthB = sizeof($result->return->bonds);
+      //dsm($result);
+      // if array have just one element      
+      if($lengthB == 1){
+        //$remision = json_decode($result->return->bonds->metadata, false); // transform the json data
+        //$suma = $suma + (float)$result->return->bonds->total;        
+	  if(isset($result->return->bonds->serviceCode)){
+		$srvcode = $result->return->bonds->serviceCode;
+	  }else{
+		$srvcode = '';
+	  }
+        $alltaxes[$par] = array(          
+          //'codSer'  => $result->return->bonds->serviceCode,
+          'codSer'  => $srvcode,
+          'rubro'   => $result->return->bonds->account,
+          'fInicio' => substr($result->return->bonds->serviceDate, 0, 10),
+          'fFin'    => substr($result->return->bonds->expirationDate, 0, 10),
+          'monto'   => $result->return->bonds->total,
+          'id'      => $result->return->bonds->id, // Bond's Id for register payment
+          'number'      => $result->return->bonds->number, // Bond's Id for register payment
+	  'interes' => 0,
+          'recargo' => 0,
+	  #'interes' => $remision->interest,
+          #'recargo' => $remision->surcharge,
+          'sku'     => $par,
+          );
+        $par+=1;
+
+      }
+      // More than one element
+      else{        
+        for($i=0; $i<$lengthB; $i++){          
+	  #$remision = json_decode($result->return->bonds[$i]->metadata, false);
+	  if(isset($result->return->bonds[$i]->serviceCode)){
+		$srvcode = substr($result->return->bonds[$i]->serviceCode,0,15);
+	  }else{
+		$srvcode = '';
+	  }
+          $alltaxes[$par] = array(          
+          //'codSer'  => substr($result->return->bonds[$i]->serviceCode,0,15),
+          'codSer'  => $srvcode,
+          'rubro'   => $result->return->bonds[$i]->account,
+          'fInicio' => substr($result->return->bonds[$i]->serviceDate, 0, 10),
+          'fFin'    => substr($result->return->bonds[$i]->expirationDate, 0, 10),
+          'monto'   => $result->return->bonds[$i]->total,
+          'id'  => $result->return->bonds[$i]->id,
+          'number'  => $result->return->bonds[$i]->number,
+	  #'interes' => $remision->interest,
+          #'recargo' => $remision->surcharge,
+	  'interes' => 0,
+          'recargo' => 0,
+          'sku'     => $par,
+          );
+          $par+=1;          
+        }        
+      }// End else      
+    }    
+  }
+  return $alltaxes;
+}
+
+/**
+* Function for generate a table with checkboxes and get data from webservices
+* Take values from form and captcha
+* @param $form
+*   Properties from form
+* @param $form_state
+*   Values from form
+*/
+function taxes_form($form, $form_state){
+  if(empty($_POST)){
+    return drupal_goto('http://www.loja.gob.ec/consulta');
+  }
+  $ced = $_POST['cedula'];
+  /*if(!is_numeric($ced)){
+    return drupal_goto('http://www.loja.gob.ec/consulta');
+  }*/
+  $header = array(
+    'codSer'  => t('Código de Servicio'),
+    'rubro'   => t('Rubro'),
+    'fInicio' => t('Fecha Emisión'),
+    'fFin'    => t('Fecha de Expiración'),
+    'monto'   => t('Valor'),
+    );
+
+  $default_value  = array();
+  $options        = array();
+  $sumInteres = 0;  // Sum Interest
+  $sumRecargo = 0; // Sum subcharge
+  $sum            = 0;
+
+//  global $ced;  
+  //global $dataws;
+  if(empty($_SESSION['dataws'])){ 
+    $dataws = _getDataWebs($ced); // Fill array with data get from web services
+    $_SESSION['dataws'] = NULL;
+  }else{
+    $dataws = $_SESSION['dataws'];
+    $ced = $_SESSION['ced'];
+  }
+  $cliente = $_SESSION['firstName'];
+//  dsm($dataws);
+  
+  foreach ($dataws as $tax) {
+    $options[$tax['sku']] = array(
+        'codSer'  => $tax['codSer'],
+        'rubro'   => $tax['rubro'],
+        'fInicio' => $tax['fInicio'],
+        'fFin'    => $tax['fFin'],
+        'monto'   => $tax['monto'],
+      );
+    $sumInteres += (float) $tax['interes'];
+    $sumRecargo += (float) $tax['recargo'];
+    $sum += (float) $tax['monto'];
+    
+    $sumInteres = number_format((float)$sumInteres, 2, '.', ''); // Format with 2 decimals
+    $sumRecargo = number_format((float)$sumRecargo, 2, '.', '');
+    $sum = number_format((float)$sum, 2, '.', '');
+  }
+  asort($options);  // Sort by codServ and Date but the key is changed
+  $data = keyfrom1($options, FALSE); // Change keys from number 1   
+  $emision = emisionFuturaView($ced);
+
+  $default_value[0]  = true;
+  $form['taxes'] = array(
+    '#type'     => 'tableselect',
+    '#title'    =>  t('Tabla con datos'),
+    '#header'   =>  $header,
+    '#options'  =>  $data,
+    '#prefix'   => '<div class="contribuyente">
+		      <div class="nombrecon"><strong>Nombre:</strong> '.$cliente.'</div><div class="apecon"><strong>Cédula:</strong> '.$ced.'</div>
+                    </div>',        
+    '#js_select'=>  TRUE,
+    '#empty'    =>  t('No dispone de impuestos por pagar'),
+    '#default_value'=> $default_value,
+    );
+  $notadescuento = '<div><strong>Nota:</strong> En el valor mostrado ya esta incluido el 10% de descuento</div>';
+  $form['submit'] = array(
+    '#type'   => 'submit',
+    '#prefix' => '
+                  <div class="totalq">' .$sum.'</div>' 
+		 . '<div>' .$emision. '</div>',    
+    '#suffix' => '<div class="nuevacon"><a class="nueva" href="consulta">Nueva Consulta</a></div>
+                  <div class="notas">
+                    <p><strong>RECUERDE:</strong> Se pueden efectuar pagos con tarjeta de crédito desde 10 USD en adelante</p>
+                    <div><strong>Tarjetas Aceptadas:</strong> 
+			<ul>
+			  <li>VISA/MASTERCARD BANCO PICHINCHA</li> 
+			  <li>VISA BANCO GENERAL RUMIÑAHUI</li>
+  			  <li>VISA BANCO DE LOJA</li>
+			  <li>DINERS</li>
+			  <li>DISCOVER</li>
+			</ul>
+		     </div>
+                    <div class="manualpagos"><a href="https://goo.gl/vqw9x3">Descargar manual de pagos</a></div>
+                  </div>',    
+    '#value'  =>  t('Pagar Impuestos'),
+    );  
+  drupal_add_js(drupal_get_path('module', 'impuestos') . '/js/payment.js'); // Check all checkboxes are marked
+  // Store data in session vars
+  if(validateCaja()){
+      $form['submit']['#disabled'] = FALSE;
+  }else{
+      $form['submit']['#disabled'] = TRUE;
+      drupal_set_message("Pagos no disponibles :: Caja Cerrada");
+      //impuestos_mesg();
+  }
+  $_SESSION['dataws'] = $dataws;
+  $_SESSION['ced'] = $ced;
+  return $form;
+}
+/**
+* Function for validate the data before submit the results
+*
+*/
+function taxes_form_validate($form, &$form_state){
+//  $ced = $form_state['values']['cedula'];
+  #global $ced;
+  $ced = $_SESSION['ced'];
+//  global $dataws;  // Have data with all taxes get from GIM system
+  $dataws = $_SESSION['dataws'];
+
+  $fechahora = date('H:i:s');
+  
+  asort($dataws);  // Sort taxes by codServ and Date like as tableselect above 
+  $dataws = keyfrom1($dataws, TRUE);  // re Sort keys for array from key 1
+  
+  $lenA = sizeof($dataws);
+  $sel = array_filter($form_state['values']['taxes']); // Get the values selected from tableselect
+  $pagar = FALSE;
+  
+  $lenB = sizeof($sel);  
+  if($lenB != 0){ 
+  /*  foreach ($sel as $key) {      
+        if($key == 1){
+          $pagar = TRUE;
+        }else{
+          $ant = $dataws[$key-1]['codSer'] . $dataws[$key-1]['rubro'];
+          $act = $dataws[$key]['codSer'] . $dataws[$key]['rubro'];
+          
+          if($ant == $act){
+            if(in_array($key, $sel) && in_array($key-1, $sel)){
+              $pagar = TRUE;
+            }else{
+              $pagar = FALSE;
+              break;
+            }            
+          }else{
+            if(in_array($key-1, $sel)){
+              if($ant == $act){
+                $pagar = TRUE;
+              }
+            }else{              
+              if($ant == $act){
+                $pagar = FALSE;
+                break;
+              }else{
+                $pagar = TRUE;
+              }
+            }
+          }
+        }
+    }// End foreach
+*/ 
+    // The payment only can do it between 08 and 17 hours with thirty minutes
+     if (!($fechahora > "08:00:00" && $fechahora < "17:30:00")){
+      form_set_error("taxes","El horario de pago es de 08H00 a 17H00");
+    }
+    if(user_is_anonymous()){
+      form_set_error("taxes","Debe <a class='registro' href='https://www.loja.gob.ec/user/register'>registrarse</a> e ingresar al sitio para poder efectuar Pagos");
+    }
+    if($lenA == $lenB){$pagar = TRUE;}
+    else $pagar = FALSE;
+    if($pagar){
+      //drupal_set_message("Puede pagar");
+      $dataws = array_intersect_key($dataws, $sel); // Get intersection between keys
+      $_SESSION['dataws'] = $dataws;
+            
+    }else{      
+      //form_set_error("taxes","No puede pagar debiendo meses anteriores");
+      form_set_error("taxes","Debe pagar todos los impuestos listados impuestos");
+    }
+  }else{
+    form_set_error("taxes","Debe elegir todos los rubros para realizar el pago");    
+  }// End if lenB !=0  
+  
+}
+/**
+* Function for submit the results and data
+*
+*/
+function taxes_form_submit($form, &$form_state){ 
+  global $dataws, $user;  
+  $dataws = $_SESSION['dataws'];
+  // params id_product and data array
+  if(in_array('administrador',$user->roles)){
+    create_order_with_impuestos(1,$dataws);  
+  }else{
+    drupal_set_message('Servicio de pago suspendido TEMPORALMENTE<br>Gracias por su comprensión');	    
+    watchdog('impuestos','Intento de pago con tarjeta - suspendido por pruebas ',array(),WATCHDOG_DEBUG);
+  }
+}
+/**
+* Consumo de emisiones futuras
+* @param cedula  - Numeric
+*/
+
+function _ws_emisionFutura($cedula){
+  $serv = wsclient_service_load('impuesto'); 
+  $result = '';
+  try{    
+    $serviceRequest = array(        
+        'identificationNumber' => (String)$cedula,
+        'username' => 'dabetancourtc',
+        'password' => 'Loja.2016.IML', // PROD 199 
+        'tramitId' => ''
+    );
+    $findStatement = array(
+        'arg0' => $serviceRequest
+    );
+    // Call operation findStatement with parameters    
+    $result = $serv->findFutureEmission($findStatement);    
+    return $result;
+
+  }catch(WSClientException $f){    
+    //echo $f;    
+  }
+  return $result;
+}
+/**
+* Render information about future till
+* @param ced - Identification
+*/
+function emisionFuturaView($ced){  
+  $ef = _ws_emisionFutura($ced); // Call function for get data from webservices 
+  $sc='';
+       
+  if(isset($ef->return->bonds)){ 
+    $sc = "<h2>Emisiones Futuras</h2>";
+    $sc .= "<table border=1><tbody>";
+    $sc .="<tr><th>Cantidad</th><th>Rubro</th><th class='total'>Total</th><tr>";
+    $sc .= "</thead><tbody>";
+    $par=0;      
+    // Get size of array
+    $lengthB = sizeof($ef->return->bonds);      
+    // if array have just one element      
+    if($lengthB == 1){        
+      $sc .= '<tr class="odd"><td>'.$ef->return->bonds->quantity.'</td>'
+      . "<td>". $ef->return->bonds->account ."</td>"        
+      . "<td class='valor total'>$". $ef->return->bonds->total ."</td></tr>";
+    }
+    // More than one element
+    else{
+      for($i=0; $i<$lengthB; $i++){
+        $par +=1;
+        // Set a clase for tr element with even or odd for CSS
+        $tr = ($par % 2 ? '<tr class="even">' : '<tr class="odd">');          
+        $sc .= $tr."<td>".$ef->return->bonds[$i]->quantity."</td>"
+        . "<td>". $ef->return->bonds[$i]->account ."</td>"
+        . "<td class='valor total'>$". $ef->return->bonds[$i]->total ."</td></tr>";
+      }        
+    }// End else   
+    $sc .= "</table>";     
+  }
+  return $sc;
+}
+
+
+/**
+ * Function for make query to web service with identificationNumber from GIM System
+ * this function call a webservice called impuesto
+ * @param $ced 
+ *    (string) Identification Number from customer (client)
+ * @return 
+ *    (array) Taxes data and personal information from customer
+ */
+function _ws_impuesto($cedula){
+  if(empty($cedula)|| !is_numeric($cedula)){
+    return drupal_goto('https://www.loja.gob.ec/consulta');
+  }
+
+  $result = array();
+  // Call selected web service with name at next function
+  ini_set('soap.wsdl_cache_enabled',0);
+  $serv = wsclient_service_load('impuesto');  
+
+  try{    
+    $serviceRequest = array(
+        //'identificationNumber' => '1103756845',
+        'identificationNumber' => (String)$cedula,
+        'username' => 'dabetancourtc',
+        'password' => 'Loja.2016.IML', // PROD 199 
+//        'username' => 'munpayclub',
+//        'password' => '75e10d8c-937d-47f6-a21d-bc930cd8b9c9', // PROD 199 
+        'tramitId' => ''
+    );
+    $findStatement = array(
+        'arg0' => $serviceRequest
+    );
+    // Call operation findStatement with parameters    
+    $result = $serv->findStatement($findStatement);
+#    if(!$result) $result = array('Vacio');
+    return $result;
+//    watchdog('impuestos','Se ejecuto la consulta con datos de acceso',array(),WATCHDOG_DEBUG);
+    
+  }catch(WSClientException $f){
+    //If the connection is failed the return will be FALSE
+    //echo $f;    
+  }
+  
+  return $result;
+}
+/**
+* Validate Open Cash
+* @return $result
+* Boolean
+*/
+function validateCaja(){
+   $result = FALSE; 
+   ini_set('soap.wsdl_cache_enabled',0);
+   $serv = wsclient_service_load('impuesto');
+   try{
+      $serviceRequest = array(
+	'username' => 'munpayclub', //199
+        'password' => 'bfc2b6f7-9eea-4368-9cb0-cde8e2da37f7',   //199
+      );
+      $validateOpenTill = array (
+        'arg0'	=> $serviceRequest
+      );
+      $result = $serv->validateOpenTill($validateOpenTill);
+   }catch(WSClientException $f){
+   }
+   return $result->return;
+}
+/**
+ * Function for register payment in GIM system and update status taxes
+ * @param $txn_id
+ *    Order with data from buy
+ * @return 
+ *    Multidimentional Array with many values
+ */
+function registrarPagoatGIM($id_txn){
+  ini_set('soap.wsdl_cache_enabled',0);
+  $result = array();
+  $transaction = db_query('SELECT * FROM payclub_vpos
+                            WHERE vpos_txn_id = :id_txn',
+                            array(':id_txn' => $id_txn))->fetchall();
+  $bondsid = array(); // Initialize array
+  $bondsid = explode(',',$transaction[0]->vpos_bondsid); //$_SESSION['bondsid'];  // Recover variable from session browser
+  $ced = $transaction[0]->vpos_ced;
+  
+  // Amount recover from order created and convert to decimal
+  $amount = $transaction[0]->vpos_subtotal;
+//  $amount = "67.32";
+//  $bondsid = array("1993199","2063036","2131850");
+  //dsm($bondsid);
+//  $ced = "1104246291";
+    
+  $fechahoy = strtotime(date('Y-m-d H:i:s'));  
+
+  // Call selected web service with name at next function
+  $serv = wsclient_service_load('impuesto');        
+  dsm("Antes de registrar en el GIM: ".$id_txn);
+  
+  try{    
+    $serviceRequest = array(        
+        'identificationNumber' => $ced,
+//        'username' => 'municipioonline', // 203
+//        'password' => 'c4185d49-1e52-46fe-a4ba-3e38d58ca615', //203
+        'username' => 'munpayclub', //199
+        'password' => 'bfc2b6f7-9eea-4368-9cb0-cde8e2da37f7',   //199
+        'tramitId' => ''
+    );
+    $payout = array(
+        'amount'      => (float) $amount, // Decimal - Total Sum
+        'bondIds'     => $bondsid,        // Array with bonds Ids
+        'paymentDate' => $fechahoy,       // Current Date (timestamp format)
+    );
+    $registerDeposit = array(
+        'arg0' => $serviceRequest,
+        'arg1' => $payout,
+    );
+    //dsm($registerDeposit);
+    // Call operation registerDeposit with parameters
+    $result = $serv->registerDeposit($registerDeposit);
+    //watchdog('impuesto','Se registro en GIM el pago para :ced',array(':ced'=> $ced),WATCHDOG_DEBUG);
+    drupal_mail('impuestos','success','dbetancourt@loja.gob.ec', language_default(),$params);
+    dsm("Pago registrado en el GIM: ".$id_txn);
+    watchdog('GIM','Pago registrado en GIM con txn_id :txnid',array(':txnid' => $id_txn),WATCHDOG_INFO);
+    // check if GIM was updated, or could be updated with cron
+    $updb = db_query('UPDATE payclub_vpos 
+                      SET vpos_gim = 1
+                      WHERE vpos_txn_id = :id_txn',
+                      array(':id_txn' => $id_txn));
+  }catch(WSClientException $f){
+    //echo $f;    
+    drupal_mail('impuestos','failed','dbetancourt@loja.gob.ec', language_default(),$params);
+    dsm($f);
+  }
+  
+  return $result;
+}
+
+/**
+ * Function for make query to web service with identificationNumber
+ * @param $product_id
+ *    Identification number for product
+ * @param $line_item_values
+ *    (Array) taxes for include into one order
+ */
+// Example from http://anthonypower.com/notebook/creating-orders-custom-line-items-using-drupal-commerce-api
+function create_order_with_impuestos($product_id, $line_item_values = array(), $uid = NULL, $use_cart = TRUE) {
+  global $user;
+  global $ced;
+  $ced = $_SESSION['ced'];
+
+  // Make sure the user id is set.
+  if (is_null($uid)) {
+    $uid = $user->uid;
+  }  
+ 
+  // First, see if there is already a cart for this user.
+  // Here we will not assume that commerce_cart is enabled.
+  if (module_exists('commerce_cart') && $use_cart) {
+    $order = commerce_cart_order_load($uid);
+
+  }
+ 
+  ////if (empty($order)) {
+    // Create the new order in checkout status with a custom order type of "donate_now_order_type".    
+    // $order = commerce_order_new($uid, 'commerce_checkout');
+    // The next line is alter with checkout_checkout for allows payment :: DRW
+    $order = commerce_order_new($uid, 'checkout_checkout');
+ 
+    // Save the order so its ID is assigned.
+    commerce_order_save($order);
+  ////}
+  
+ 
+  // Load whatever product represents the item the customer will be
+  // paying for and create a line item for it.
+  $product = commerce_product_load($product_id);
+  $keybond = 0;  
+ foreach ($line_item_values as $field_name => $value) {
+  // Create a line item with quantity 1 and this product.
+  $line_item = commerce_product_line_item_new($product, 1, $order->order_id, array(), 'impuestoline');  
+  
+  // Add the custom values to the line_item fields
+  
+    //$line_item->{$field_name}[LANGUAGE_NONE][0]['value'] = $value['$field_name'];
+    //$line_item->commerce_price[LANGUAGE_NONE][0]['amount'] = 40;
+    $line_item->field_rubro_li[LANGUAGE_NONE][0]['value'] = $value['rubro'];
+    $line_item->field_fecha_pa_li[LANGUAGE_NONE][0]['value'] = $value['fInicio'];
+    $line_item->field_monto_li[LANGUAGE_NONE][0]['value'] = (float) $value['monto'];
+    $line_item->field_servicio_li[LANGUAGE_NONE][0]['value'] = $value['codSer'];
+
+    $bondIds[$keybond++] = $value['id'];  // BondId
+    $bondNum[$keybond++] = $value['number']; // BondNumber
+ 
+  // Save the line item to get its ID.
+  commerce_line_item_save($line_item);
+ 
+  // Add the line item to the order using the wrapper.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $order_wrapper->commerce_line_items[] = $line_item;  
+ }
+
+ $_SESSION['bondsid'] = $bondIds;  // Set variable on session browser for recover later
+ $_SESSION['bondsNum'] = $bondNum;  // Set variable on session browser for recover later
+ $_SESSION['ced'] = $ced;
+
+  // Save the order again to update its line item reference field.    
+  commerce_order_save($order);
+  
+  //return $order->order_id;
+  drupal_goto('checkout/' . $order->order_id);
+}
+/**
+ * Function for reorder array start with key from 1
+ * @param $data
+ *    (Array) An array order with asort function
+ * @param $all
+ *    (Boolean) To know if there is all elements include Id field Bonds
+ * @return $of1
+ *    Multidimentional Array with many values
+ */
+function keyfrom1($data, $all){
+  $of1 = array();
+  $i =0;
+  foreach ($data as $tax) {
+    $i +=1;
+    if($all){
+      $of1[$i] = array(          
+          'codSer'  => $tax['codSer'],
+          'rubro'   => $tax['rubro'],
+          'fInicio' => $tax['fInicio'],
+          'fFin'    => $tax['fFin'],
+          'monto'   => $tax['monto'],
+          'id'  => $tax['id'],
+          'number'  => $tax['number'],
+          'sku'  => $tax['sku'],
+      );
+    }else{
+      $of1[$i] = array(
+          'codSer'  => $tax['codSer'],
+          'rubro'   => $tax['rubro'],
+          'fInicio' => $tax['fInicio'],
+          'fFin'    => $tax['fFin'],
+          'monto'   => $tax['monto'],
+      );
+    }
+  }  
+  return $of1;
+}
+/**
+* Makes a query with ID from webservice with out wsclient module
+*/
+
+function consultaflat($ced){
+  $servicio="http://190.57.168.200:8080/gim/paymentPlatform?wsdl";
+  $client = new SoapClient($servicio);
+  $serviceRequest = array(
+        'identificationNumber' => '1103756845',
+        //'identificationNumber' => (String)$cedula,
+        'username' => 'dabetancourtc',
+        'password' => 'Loja.2015.IML', // PROD 199 
+        'tramitId' => ''
+    );
+    $findStatement = array(
+        'arg0' => $serviceRequest
+    );
+
+  try{
+    $result = $client->findStatement($findStatement);
+    return $result;
+  }catch(Exception $e){
+    print $e;
+  }
+
+}
+function test_page(){
+  $ced = '1103756845';
+  $result = array();
+//  $result =  consultaflat($ced);
+  $result = _ws_impuesto($ced);
+  //dsm($result);
+  return 'Test with out module';
+}

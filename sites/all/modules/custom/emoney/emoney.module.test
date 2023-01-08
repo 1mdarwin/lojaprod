@@ -1,0 +1,382 @@
+<?php
+
+
+define('EMONEY_MODE_LIVE','live');
+define('EMONEY_MODE_TEST','sandbox');
+define('IDUSER_BCE','AdmMunLoja01');
+define('PASSUSER_BCE','adc84f08b9');
+/**
+* Test page with out parameters
+*/
+
+function emoney_testpage(){
+  return 'Test for E-money';
+}
+
+/**
+* Implements menu HOOK
+*/
+function emoney_menu(){
+  $items['emoney/test'] = array(
+    'title' => t('E-Money Test'),
+    'description' => t('Fill object with demo data'),
+    'page callback' => 'testpage',
+    'access callback' => TRUE,
+    'file' => 'emoney.inc',
+    'type' => MENU_NORMAL_ITEM,
+    
+  );
+  $items['emoney/process'] = array(
+    'title' => t('E-Money Process'),
+    'description' => t('Process payment'),
+    'page callback' => 'e_process',
+    'access callback' => TRUE,
+    'file' => 'emoney.inc',
+    'type' => MENU_NORMAL_ITEM,
+
+  );
+
+
+  return $items;
+}
+
+/**
+* Implements hook_commerce_payment_method_info()
+*/
+function emoney_commerce_payment_method_info(){
+  $payment_methods = array();
+  $payment_methods['emoney'] = array(
+    'base' => 'emoney',
+    'title' => t('Electronic Money'),
+    'short_title' => t('E-money EC'),
+    'description' => t('Electronic Money with webservices SOAP'),
+    'display_title' => t('Pay with E-Money'),
+    'offsite' => TRUE,
+    'offsite_autoredirect' => TRUE,
+    'buttonsource' => 'CommerceGuys_Cart_PPS',
+  );
+  return $payment_methods;
+}
+/**
+* Returns the default settings for the Electronic Money payment method
+*/
+function emoney_default_settings(){
+  $default_currency = commerce_default_currency();
+  return array(
+    'username' => 'AdmMunLoja01',
+    'password' => 'adc84f08b9',
+    'server' => 'sandbox',
+  );
+}
+/**
+*
+*/
+function emoney_settings_form($settings = array()) {
+  module_load_include('inc','commerce_payment','includes/commerce_payment.credit_card');
+  $form = array();
+  $settings = (array) $settings + emoney_default_settings();
+  $form['username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username'),
+    '#description' => t('WebService SOAP Username'),
+    '#default_value' => $settings['username'],
+    '#required' => TRUE,
+  );
+  $form['password'] = array(
+    '#type' => 'password',
+    '#title' => t('Password'),
+    '#description' => t('WebService Password'),
+    '#required' => FALSE,
+  );
+  $form['server'] = array(
+    '#type' => 'radios',
+    '#title' => t('Transaction mode'),
+    '#description' => t('Adjust to live transactions when you are ready to start processing real payments.'),
+    '#options' => array(
+      EMONEY_MODE_LIVE => t('Live transactions E-Money'),
+      //EMONEY_MODE_TEST => t('Test transactions'),
+      'sandbox' => t('Test transactions E-Money'),
+    ),
+    '#default_value' => $settings['server'],
+  );
+
+
+  return $form;
+}
+/**
+* 
+*/
+function emoney_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  // If this checkout form contains the payment method radios...
+
+  if(!empty($form['commerce_payment']['payment_method']['#options'])){
+    // Loop over its options array looking for a E-money option
+    foreach($form['commerce_payment']['payment_method']['#options']as $key => &$value){
+      list($method_id, $rule_name) = explode('|', $key);
+      // If we find E-money...
+      if($method_id == 'emoney'){
+        $icons = emoney_icons();
+        $value = t('!logo', array('!logo' => $icons['emoney']));
+	$value .= '<p>'.t('E-money Central Bank - pay securely without sharing your financial information through Electronic Money').'</p>';
+	# $form['commerce_payment']['payment_method']['attached']['css'][] = drupal_get_path('module','emoney').'/theme/emoney.theme.css';
+        break;
+      }
+    }
+  }
+
+}
+/**
+ * Returns an array of PayPal payment method icon img elements.
+ *
+ * @param $methods
+ *   An array of PayPal payment method names to include in the icons array; if
+ *   empty, all icons will be returned.
+ *
+ * @return
+ *   The array of themed payment method icons keyed by name: visa, mastercard,
+ *   amex, discover, echeck, paypal
+ */
+function emoney_icons($methods = array()) {
+  $icons = array();
+
+  foreach (emoney_payment_methods() as $name => $title) {
+    if (empty($methods) || in_array($name, $methods, TRUE)) {
+      $variables = array(
+        'path' => drupal_get_path('module', 'emoney') . '/images/' . $name . '.gif',
+        'title' => $title,
+        'alt' => $title,
+        'attributes' => array(
+          'class' => array('paypalclub-icon'),
+        ),
+      );
+      $icons[$name] = theme('image', $variables);
+    }
+  }
+
+  return $icons;
+}
+/**
+* Payment Methods
+*/
+function emoney_payment_methods() {
+  return array(
+    'visa' => t('Visa'),
+    'emoney' => t('Electronic Money'),
+    'discover' => t('Discover'),
+    'diners' => t('Diners Club'),
+  );
+}
+
+/**
+ * Payment method callback: redirect form, a wrapper around the module's general
+ *   use function for building a WPS form.
+ */
+function emoney_redirect_form($form, &$form_state, $order, $payment_method) {
+  // Return an error if the enabling action's settings haven't been configured.
+  if (empty($payment_method['settings']['username'])) {
+    drupal_set_message(t('E-Money EC is not configured for use. No E-Money username has been specified and other parameters.'), 'error');
+    return array();
+  }
+
+  $settings = array(
+    // Return to the previous page when payment is canceled
+    'cancel_return' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Specify the current payment method instance ID in the notify_url
+    'payment_method' => $payment_method['instance_id'],
+
+    // Include the application indicator
+    'bn' => $payment_method['buttonsource'],
+  );
+
+  return emoney_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
+
+}
+
+/**
+ * Builds a Website Payments Standard form from an order object.
+ *
+ * @param $order
+ *   The fully loaded order being paid for.
+ * @param $settings
+ *   An array of settings used to build out the form, including:
+ *   - server: which server to use, either sandbox or live
+ *   - local_id: the PayClub Local ID for Municipality the payment submits to
+ *   - cancel_return: the URL PayClub should send the user to on cancellation
+ *   - return: the URL PayClub should send the user to on successful payment
+ *   - currency_code: the PayClub currency code to use for this payment if the
+ *     total for the order is in a non-PayPal supported currency
+ *   - language: the PayClub language code to use on the payment form
+ *   - payment_action: the PayClub payment action to use: sale, authorization,
+ *     or order
+ *   - payment_method: optionally a payment method instance ID to include in the
+ *     IPN notify_url
+ *
+ * @return
+ *   A renderable form array.
+ */
+function emoney_order_form($form, &$form_state, $order, $settings) {
+   $wrapper = entity_metadata_wrapper('commerce_order',$order); 
+   $currency_code = 'USD';
+   $order_currency_code = $wrapper->commerce_order_total->currency_code->value();
+   $amount = $wrapper->commerce_order_total->amount->value();
+   $amount = number_format(floatval($amount)/100,2);
+   
+   $cell = $order->data['emoney']['cell'];
+   $ced = $order->data['emoney']['ced'];
+
+   // Create new transaction with status pending for send to gateway payclub
+   $transaction = commerce_payment_transaction_new('emoney', $order->order_id);
+   $transaction->amount = $amount;
+   $transaction->currency_code = $currency_code;
+   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+   //$transaction->instance_id = $payment_method['instance_id'];
+   $transaction->instance_id = 'emoney|commerce_payment_emoney';
+   
+   commerce_payment_transaction_save($transaction);
+
+  // Ensure a default value for the payment_method setting.
+
+   $vpos = array();
+   $vpos['vpos_fec'] = Date("Y-m-d H:i:s");
+   $vpos['vpos_txn_id'] = $transaction->transaction_id;
+   $vpos['vpos_ced'] = $_SESSION['ced'];
+   $vpos['vpos_bondsid'] = implode(',',$_SESSION['bondsid']);
+   $vpos['vpos_bond_num'] = implode(',',$_SESSION['bondsNum']);
+   $vpos['vpos_cct'] = '';
+   $vpos['vpos_subtotal'] = $amount;
+   $vpos['vpos_iva'] = '';
+   $vpos['vpos_ice'] = '';
+   $vpos['vpos_interes'] = '';
+   $vpos['vpos_total'] = 0.00;
+   $vpos['vpos_aut'] = ''; // cell
+   $vpos['vpos_tc'] = 'EM'; // EM :: Electronic Money
+   $vpos['vpos_mes'] = '';
+   $vpos['vpos_tipo'] = '';
+   $vpos['vpos_flag']= 1; // 1 no check with conciliation payclub
+
+   // Save before send to VPOS to local vpos table
+   drupal_write_record('payclub_vpos',$vpos);
+   
+   $data = array(
+      'ced' => $ced,
+      'order_id' => $order->order_id,
+      'amount' => $amount,
+      'cell' => $cell,
+   );
+
+   // Allow modules to alter parameters of the API request.
+   drupal_alter('emoney_order_form_data', $data, $order);
+
+   //Enable this line when the payment is ready :: DRW
+  $form['#action'] = "http://www.loja.gob.ec/mimunicipio/emoney/process";
+
+  foreach ($data as $name => $value) {
+    if (!empty($value)) {
+      $form[$name] = array('#type' => 'hidden', '#value' => $value);
+    }
+  }
+
+//  commerce_payment_transaction_save($transaction);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Processing transaction with Central Bank'),
+  );
+
+  return $form;
+}
+/**
+* Alter form
+**/
+function emoney_submit_form($payment_method, $pane_values, $checkout_pane, $order){
+  $form = array();
+  $form['ced'] = array(
+   '#type' => 'textfield',
+   '#title' => t('Cedula'),
+   '#description' => t('Please enter your ID number'),
+//   '#default_value' => $default['number'],
+   '#attributes' => array('autocomplete' => 'off'),
+   '#required' => TRUE,
+   '#maxlength' => 10,
+   '#size' => 10,
+  );
+
+  $form['cell'] = array(
+   '#type' => 'textfield',
+   '#title' => t('Cell number'),
+   '#description' => t('Please add your Cell number'),
+//   '#default_value' => $default['number'],
+   '#attributes' => array('autocomplete' => 'off'),
+   '#required' => TRUE,
+   '#maxlength' => 10,
+   '#size' => 10,
+  );
+  return $form;
+}
+
+/**
+* CALLBACK submit form
+**/
+
+function emoney_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order->data['emoney'] = $pane_values;
+}
+
+/**
+* CALLBACK submit form validate
+**/
+function emoney_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  $wrapper = entity_metadata_wrapper('commerce_order',$order);
+  $currency_code = 'USD';
+  $order_currency_code = $wrapper->commerce_order_total->currency_code->value();
+  $amount = $wrapper->commerce_order_total->amount->value();
+  $amount = number_format(floatval($amount)/100,2);
+
+  $serv = wsclient_service_load('emoney');
+  $fechahoy = 'muni-'. strtotime(date('Y-m-d H:i:s')); // unix format
+  $ced = $pane_values['ced'];
+  $cell = $pane_values['cell'];
+  
+  
+  $cash = new stdClass();
+  $cash->dtoRequestCobroPre = new stdClass();
+  
+  $cash->dtoRequestCobroPre->amount = $amount;
+  $cash->dtoRequestCobroPre->brandId = 1;
+  $cash->dtoRequestCobroPre->currency = 1;
+  $cash->dtoRequestCobroPre->document = $ced;
+  $cash->dtoRequestCobroPre->language = "ES";
+  $cash->dtoRequestCobroPre->msisdnSource = $cell;
+  $cash->dtoRequestCobroPre->msisdnTarget = IDUSER_BCE;
+  $cash->dtoRequestCobroPre->password = PASSUSER_BCE;
+  $cash->dtoRequestCobroPre->pin = PASSUSER_BCE;
+  $cash->dtoRequestCobroPre->user = IDUSER_BCE;
+  $cash->dtoRequestCobroPre->utfi = $fechahoy;
+  try{
+    $result = $serv->cobroPre($cash);
+  }catch (WSClientException $f){
+    echo $f;
+  }
+  if(!empty($result)){
+    dsm($result);
+    switch($result->return->codeErrorId){
+    case '104': $mesg = form_set_error('ced', $result->return->resultText); return false;
+    case '034': $mesg = form_set_error('cell', $result->return->resultText); return false;
+    default: break;
+    } 
+  }
+
+  if(strlen($ced) < 10){
+    form_set_error('ced', t('Debe digitar un número de cedula valido'));
+    return false;
+  }
+  if(strlen($cell) != 10){
+    form_set_error('ced', t('Debe digitar un número de celular valido'));
+    return false;
+  }
+  dsm($order);
+
+}

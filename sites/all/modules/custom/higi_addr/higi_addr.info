@@ -1,0 +1,8 @@
+name = Higiene Domicilios
+description = Allow to get the address information with Id (Cedula) like parameter
+
+version = "7.x-1.0"
+core = "7.x"
+project = "gad"
+datestamp = "1581094697"
+; 2020-02-07 12H00

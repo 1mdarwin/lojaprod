@@ -1,0 +1,5 @@
+name = Certificados Municipio de Loja
+description = Certificados generados desde el GIM
+package=GAD
+core = 7.x
+version = 7.x.3

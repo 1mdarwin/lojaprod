@@ -1,0 +1,54 @@
+<?php
+define('WS_IP', '192.168.1.146');
+define('URL_DIR_HIGIENE', ':8080/gim/seam/resource/rest/hygiene/'); // PROD
+define('AUTH_PARAMHIG', 'rfarmijosm:Consultar2020$');
+function higi_addr_menu(){
+  $items = array();
+	$items['higiene/consulta'] = array(
+    'title' => t('Consulta de Direcciones'),
+		'description' => t('Consultar datos del usuario con número de cédula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('consultad_form'),
+    'access arguments'  => array('administer consultah'),
+    'access callback'  => 'user_access',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'higi_addr.inc',
+  );
+  $items['higiene/consulta/resdir'] = array(
+    'title' => t('Resultado de la búsqueda'),
+		'description' => t('Consultar sus impuestos con su número de cédula'),
+    'page callback' => 'resultado_direccion',
+    'access arguments'  => array('administer direccion'),
+    'access callback'  => 'user_access',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'higi_addr.inc',
+  );
+  return $items;
+}
+/**
+* HOOK permission
+* Allow to access to URL if it has permission
+*/
+function higi_addr_permission(){
+  return array(
+    'administer consultah' => array(
+      'title' => t('Consulta solo por acceso autenticado'),
+      'description' => t('Permitir acceso para consultar con número de cédula para higiene'),
+      ),
+    'administer direccion' => array(
+      'title' => t('Listado de direcciones de contribuyentes'),
+      'description' => t('Permitir resultado de la consulta higiene'),
+      ),
+    );
+}
+/**
+* HOOK permission
+* Redirect user after login to custom page
+*/
+function higi_addr_user_login(&$edit, $account) {
+  if (!isset($_POST['form_id']) || $_POST['form_id'] != 'user_pass_reset') {
+    if(in_array('higiene', $account->roles)) {
+      $_GET['destination'] = 'higiene/consulta';
+    }
+  }
+}

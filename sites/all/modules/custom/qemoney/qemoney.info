@@ -1,0 +1,8 @@
+name=Qemoney
+description=Consulta de Dinero Electronico
+core=7.x
+version = "7.x-2.0"
+core = "7.x"
+project = "gad"
+datestamp = "1438858800"
+

@@ -1,0 +1,59 @@
+<?php
+/**
+* CREATE DATABASE FOR REGISTER VPOS TRANSACTION
+*/
+
+/**
+* Implements HOOK schema 
+*/
+function taxpayerupdate_schema(){
+	$schema = array();
+	$schema['taxpayerupdate'] = array(
+		'description'	=> 'Store information for each taxpayer update',
+		'fields' =>	array(
+			'id'	=> array(
+				'description'	=> 'Serial numeric ID of de VPOS in local table for database',
+				'type'	=> 'serial',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+			),			
+			'date_tax'	=> array(
+				'description'	=> 'Current date for updates',
+				'type'	=> 'varchar',
+				'mysql_type'	=> 'datetime',
+			),			
+			'dni_tax'	=> array(
+				'description'	=> 'ID for customer(cedula)',
+				'type'	=> 'varchar',
+				'length' => 13,
+				'not null'	 => TRUE,
+			),
+			'lastname_tax'	=> array(
+				'description'	=> 'Customers name',
+				'type'	=> 'varchar',
+				'length' => 120,
+				'not null'	 => TRUE,
+			),
+			'address_tax'	=> array(
+				'description'	=> 'Addres taxpayer',
+				'type'	=> 'varchar',
+				'length' => 150,
+				'not null'	 => TRUE,
+			),
+			'mail_tax'	=> array(
+				'description'	=> 'mail taxpayer',
+				'type'	=> 'varchar',
+				'length' => 80,
+				'not null'	 => TRUE,
+			),
+            'phone_tax'	=> array(
+				'description'	=> 'Telf taxpayer',
+				'type'	=> 'varchar',
+				'length' => 80,
+				'not null'	 => TRUE,
+			),
+		),
+		'primary key'	=>	array('id'),		
+	);
+	return $schema;
+}

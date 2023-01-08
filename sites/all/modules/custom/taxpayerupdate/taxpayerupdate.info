@@ -1,0 +1,14 @@
+name='Taxpayer Update'
+description='Update taxpayer information using moderation'
+package = GADMLoja
+core = 7.x
+
+configure = admin/commerce/orders/taxpayerupdate/config
+;files[] = wsclient_examples.test
+dependencies[] = wsclient_soap
+dependencies[] = wsclient_rest
+
+; Information added by drupal.org packaging script on 2019-08-08
+version = "7.x-3.0"
+project = "gad"
+datestamp = "1653486551"

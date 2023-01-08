@@ -1,0 +1,217 @@
+<?php
+
+/**
+ * @file
+ * Web service client examples module.
+ */
+/*
+ * HOOK Help
+ */
+function impuestos_help($path, $arg){
+  $help = '';
+  switch ($path) {
+    case 'admin/help#impuestos':
+      $help = "<h1>Ayuda para Impuesto GIM </h1>";
+      $help .= t('This module is for get taxes from citizens</br>');
+      $help .= t('This module work with two webservices, from GIM and AGP systems</br>');
+      $help .= t('Include payments too');
+      break;
+    
+    default:
+      # code...
+      break;
+  }  
+  return $help;
+}
+/*
+ * Implmentation HOOK Menu
+ */
+
+function impuestos_menu(){
+        // Para mantenimiento se cambia el texto a consultando, caso contrario consulta 
+  $items['consulta'] = array(
+    'title' => t('Consulta de Impuestos'),
+    'description' => t('Consultar sus impuestos con su número de cédula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('consulta_form'),
+    //'access arguments' => array('access content'),
+    'access callback' => true,
+    'file' => 'impuestos.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['consulta/res'] = array(
+    'title' => t('Resultado de la consulta'),
+    'description' => t('Display content into a table with checkboxes'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('taxes_form'),    
+    //'access arguments' => array('access content'),
+    'access callback' => TRUE,
+    'file' => 'impuestos.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['consulta/resultado'] = array(
+      'title' => t('Resultado de la consulta'),  
+      'description' => t('Impuestos que adeuda al Municipio de Loja'),
+      'page callback' => 'resultado_page',
+      'access callback' => true,
+      'file' => 'impuestos.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['consulta/test'] = array(
+      'title' => t('Resultado de la consulta (test)'),
+      'description' => t('Impuestos que adeuda al Municipio de Loja'),
+      'page callback' => 'test_page',
+      'access callback' => true,
+      'file' => 'impuestos.inc',
+      'type' => MENU_NORMAL_ITEM,
+  );
+
+  // Renombrar para mantenimiento lo que se encuenta en los corchetes
+  $items['consultam'] = array(
+      'title' => t('Mantenimiento del servicio'),  
+      'description' => t('Mantenimiento periodico del servicio de consulta'),
+      'page callback' => 'mantenimientos',
+      'access callback' => true,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  
+  return $items;  
+}
+
+/*
+ * Implmentation HOOK block_info
+ */
+function impuestos_block_info(){
+  $blocks = array();
+  $blocks['impuesto'] = array(
+      'info'=>'Consulta de Impuestos'
+  );
+  return $blocks;
+}
+/*
+ * Implmentation HOOK block_view
+ */
+function impuestos_block_view($delta = ''){
+  $blocks = array();
+  switch ($delta) {
+    case 'impuesto':
+      $blocks['subject'] = t('Consulta impuestos');
+      $blocks['content'] = drupal_get_form('consulta_form_block');      
+      /*$blocks['content'] = array(
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('consulta_form'),
+      );
+      */
+      break;
+  }
+  return $blocks;
+}
+/*
+ * Call function for render the block form
+ */
+function consulta_form_block($form, &$form_state){  
+  $form['cons'] = array(
+      '#title' => t(''),
+      '#type' => 'fieldset',
+//      '#description' => t('Consulta a traves de su cedula')
+  );
+  $form['cons']['cedula'] = array(
+      '#title' => t('Número de cédula'),
+      '#type' => 'textfield',
+      '#required' => true,
+      '#maxlenght' => 10,
+      '#size' => 15,
+      '#description' => t('Digite solo numeros'),
+	);
+  $form['cons']['save'] = array(
+      '#prefix' => '<div class="consulta">',
+      '#type' => 'submit',
+      '#value' => t('Consultar'),
+  ); 
+  //$form['#theme'] = array('consulta_form_block');
+	
+  return $form;
+}
+/**
+* Send a mail 
+* HOOK_mail
+*/
+function impuestos_mail($key, &$message, $params){
+  global $user;
+  $usuario = $user->name;
+  switch ($key) {
+    case 'failed':
+      //$message['to'] = $user->mail;
+      watchdog('GIM','Mail status reversed sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('Pago FALLO en GIM :: NO ACTUALIZADO');
+      $message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
+      $message['body'][] = t('Por favor actualizarlo manualmente antes del cierre de jornada.');
+      $message['body'][] = t('Municipio de Loja.');
+      break;
+   case 'success':
+      //$message['to'] = $user->mail;
+      watchdog('GIM','Mail success sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('PAGO GIM :: Exitoso');
+      //$message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('<h2>Hola Administrador</h2>');
+      $message['body'][] = t('<p>El pago en el sistema GIM fue exitoso.</p>');
+      $message['body'][] = t('Gracias por utilizar estos servicios.');
+      $message['body'][] = t('<p>Municipio de Loja.</p>');
+      break;
+    default:
+      # code..success .
+      break;
+  }
+}
+
+
+/**
+ * Implements hook_default_wsclient_service().
+ */
+function impuestos_default_wsclient_service() {
+  // Google Translate service (REST)
+  // Note that this service does not seem to work anymore :-(  
+
+  // Impuestos GAD service (SOAP)
+//   $ip = '190.57.168.200';   // PROD
+//   $ip = '190.214.14.226';
+   $ip = '190.214.14.232';
+//  $ip = '192.168.1.151';   // PROD
+//  $ip = '190.57.168.203';     // TEST
+  $port = '8080';  
+  $services = array();
+  
+  $service = new WSClientServiceDescription();
+  $service->name = 'impuesto';
+  $service->label = 'Impuestos GIM';
+  $service->url = 'http://' . $ip . ':'. $port . '/gim/paymentPlatform?wsdl';
+//  $service->url = 'http://190.57.168.199:8080/gim/paymentPlatform?wsdl';
+  $service->type = 'soap';
+      
+  try {
+    $service->endpoint()->initializeMetaData();
+    $services[$service->name] = $service;
+  }
+  catch (WSClientException $e) {
+    watchdog('wsclient', $e->__toString());
+  }  
+
+  return $services;
+}
+/**
+* Maintenance Service
+*/
+function mantenimientos(){
+	$mensaje = 'El Servicio de consulta de impuestos esta temporalmente en mantenimiento';
+	$mensaje .= '<div>Se restablecer&aacute; en breves momentos<br/></div>';
+	$mensaje .= '</br><p><strong>Gracias por su comprensi&oacute;n</strong></p>';
+	
+	return $mensaje;
+}
+function cierreanio(){
+	$mensaje = 'El servicio de consulta esta deshabilitado por cierre fiscal de fin de año';
+	$mensaje .= '<div>Este servicio volverá a estar operativo a partir del <strong>2 de enero del 2020</strong></div>';
+	$mensaje .= '<div>Gracias por su comprensión</div>';
+	return $mensaje;
+}

@@ -1,0 +1,99 @@
+<?php
+
+function after_login_popup_form($form, &$form_state) {
+
+$site_name = variable_get('site_name');
+
+  $form['login_popup_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#required' => TRUE,
+    '#default_value' => variable_get('login_popup_title', 'Lorem ipsum dolor sit amet'),
+  );
+
+  $form['login_popup_text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#rows' => 5,
+    '#required' => TRUE,
+    '#default_value' => variable_get('login_popup_text', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sodales, arcu vitae commodo finibus, metus ante placerat eros, at fermentum justo augue nec nulla. Fusce eu dolor fringilla, accumsan nisl ultricies, aliquam eros.'),
+  );
+ 
+  return system_settings_form($form);
+}
+/**
+ * HOOK_module
+ *
+ * **/
+
+function after_login_popup_menu() {
+  $items = array();
+
+  $items['admin/config/content/after_login_popup'] = array(
+    'title' => 'After login popup',
+    'description' => 'Configuration for Current posts module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('after_login_popup_form'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * HOOK_init
+ *
+ * **/
+function after_login_popup_init(){
+  global $user;
+  $path = drupal_get_path('module', 'after_login_popup');
+  drupal_add_css($path . '/after_login_popup.css');
+  $logo = "<img src='".$path."/logoiml.png'>";
+  if(!isset($user->name)){
+    $user->name = "Contribuyente";
+  }
+  $message = '<h2>Bienvenido</h2><strong>'.$user->name.'</strong> <br>Al Municipio de Loja';
+  drupal_add_js(
+     array(
+        'after_login_popup' => array(
+		'login_title' => variable_get('login_popup_title', 'Lorem ipsum dolor sit amet'),
+		'message'=> $message,
+		'logo' => $logo,
+//            'login_text' => variable_get('login_popup_text', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sodales, arcu vitae commodo finibus, metus ante placerat eros, at fermentum justo augue nec nulla. Fusce eu dolor fringilla, accumsan nisl ultricies, aliquam eros.'),
+            )
+        ),
+        'setting'
+    ); 
+}
+/**
+ * HOOK_preprocess_html
+ *
+ * **/
+function after_login_popup_preprocess_html(&$vars) {
+
+    if(isset($_COOKIE["user"])){
+        $path = drupal_get_path('module', 'after_login_popup');
+        drupal_add_js(
+        $path . '/after_login_popup.js');
+    }
+
+    setcookie("user","userlogin",time()-1);
+
+}
+
+/**
+ * HOOK_user_login
+ * when the user log in
+ * **/
+function after_login_popup_user_login(&$edit, $account) {
+    
+    setcookie("user","userlogin");
+
+}
+/**
+ * HOOK_user_login
+ * This hook control when a user was created
+ * **/
+//function after_login_popup_user_insert(&$edit, $account, $category) {}
+

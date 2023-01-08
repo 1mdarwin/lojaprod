@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="yes"?>
+<aacplayer>
+	<stationinfo>
+		<station>RADIO MUNICIPAL 90.1 FM</station>
+		<caption>RADIO MUNICIPAL 90.1 FM</caption>
+		<statusscriptlink>http://media1.cdnlayer.biz/system/misc/aacplayer/listeners.php/id-538/</statusscriptlink>
+		<logo x="15" y="17">logo.png</logo>
+	</stationinfo>
+	
+
+	<iconlink>
+		<facebooklink>http://www.facebook.com/</facebooklink>
+		<twitterlink>http://www.twitter.com/</twitterlink>
+		<emaillink>mailto:</emaillink>
+	</iconlink>
+	
+	<equalizerconfig>
+		<bottomcolor>008000</bottomcolor>
+	    <middlecolor>ffff00</middlecolor>
+		<topcolor>ff8040</topcolor>
+		<peakcolor>ffffff</peakcolor>
+	</equalizerconfig>
+	
+	<mediaconfig>
+		<autoplay>no</autoplay>
+		<rtmp>rtmp://media1.cdnlayer.biz:1935/8560/</rtmp>
+		<streamaddress>default.stream</streamaddress>
+		<videointro width="325" height="220"></videointro>
+	</mediaconfig>
+	
+	
+</aacplayer>

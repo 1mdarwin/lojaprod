@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * HOOK alter form
+ * This hook in this module don't use it
+ */
+function storeplaces_form_alter($form, &$form_state, $form_id){
+    if($form_id == 'webform_client_form_14933'){
+        //dsm($form_id);
+        //$codigo = $form['submitted']['codigoins'];
+        //dsm($form['submitted']);
+        //dsm($form_state);
+        $webform_nid = '14933';
+        $serial = _webform_submission_serial_next_value($webform_nid);
+        //$form['submitted']['codigoins']['#default_value'] = $serial;        
+        
+        //dsm($serial);
+        //dsm($codigo);
+    }
+
+    
+}
+/**
+ * HOOK_webform_submission_presave
+ * */
+function storeplaces_webform_submission_presave($node, &$submission) {
+    # https://www.webomelette.com/drupal-webform-submission-presave-hook
+    // Get the submission user object.
+//    dsm($submission);
+    //dsm($node);
+    $mercados = array('16538',
+			'16539',
+			'16540',
+			'16541',
+			'16542',
+			'16543',
+			'16544',
+			'16545',
+			'16546',
+			'16547',
+			'16548',
+			'16549',
+			'16550',
+			'16551',
+			'16552',
+			'16553',
+			'16554',
+			'16555'
+	    );
+    if(in_array($node->nid, $mercados)){
+//        drupal_set_message('Esta dentro del arreglo');
+        $serial = _webform_submission_serial_next_value($node->nid);
+        //$submission->data[2][0] = $node->nid .'-'. ($serial+1);
+        $submission->data[8][0] = $node->nid .'-'. ($serial+1); 
+    }
+    
+      
+  }

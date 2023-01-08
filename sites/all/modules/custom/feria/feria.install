@@ -1,0 +1,51 @@
+<?php
+/**
+* CREATE DATABASE FOR REGISTER VPOS TRANSACTION
+*/
+
+/**
+* Implements HOOK schema 
+*/
+function feria_schema(){
+	$schema = array();
+	$schema['feria'] = array(
+		'description'	=> 'Stores tickets number from feria',
+		'fields' =>	array(
+			'id'	=> array(
+				'description'	=> 'Serial numeric ID of de feria in local table for database',
+				'type'	=> 'serial',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+			),			
+			'fecnow'=> array(
+				'description'	=> 'Transaction date and time',
+				'type'	=> 'varchar',
+				'mysql_type'	=> 'datetime',
+			),			
+			'idferia'	=> array(
+				'description'	=> 'Transaction ID generated from order',
+				'type'	=> 'varchar',
+				'length' => 10,
+				'not null'	 => TRUE,
+			),
+			'ticket'=> array(
+				'description'	=> 'ID for ticket(feria)',
+				'type'	=> 'varchar',
+				'length' => 13,
+				'not null'	 => TRUE,
+			),
+			'winner'	=> array(
+				'description'	=> 'Winner',
+				'type'	=> 'varchar',
+				'length' => 1,
+				'not null'	 => TRUE,
+				'default'	=> '',
+			),			
+		),
+		'primary key'	=>	array('id'),
+		'indexes' => array(
+      			'idf' => array('idferia'),
+    		),
+	);
+	return $schema;
+}

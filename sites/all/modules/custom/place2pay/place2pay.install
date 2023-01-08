@@ -1,0 +1,155 @@
+<?php
+/**
+* CREATE DATABASE FOR REGISTER VPOS TRANSACTION
+*/
+
+/**
+* Implements HOOK schema 
+*/
+function place2pay_schema(){
+	$schema = array();
+	$schema['place2pay'] = array(
+		'description'	=> 'Store information for each payment',
+		'fields' =>	array(
+			'id'	=> array(
+				'description'	=> 'Serial numeric ID of de VPOS in local table for database',
+				'type'	=> 'serial',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+			),			
+			'fecha'	=> array(
+				'description'	=> 'Transaction date and time',
+				'type'	=> 'varchar',
+				'mysql_type'	=> 'datetime',
+			),			
+			'txn_id'	=> array(
+				'description'	=> 'Transaction ID generated from order',
+				'type'	=> 'varchar',
+				'length' => 10,
+				'not null'	 => TRUE,
+			),
+			'requestId'	=> array(
+				'description'	=> 'Remote Id for payment created from place2pay',
+				'type'	=> 'varchar',
+				'length' => 10,
+				'not null'	 => TRUE,
+			),
+			'cedula'	=> array(
+				'description'	=> 'ID for customer(cedula)',
+				'type'	=> 'varchar',
+				'length' => 13,
+				'not null'	 => TRUE,
+			),
+			'order_id'	=> array(
+				'description'	=> 'ID for order',
+				'type'	=> 'varchar',
+				'length' => 8,
+				'not null'	 => TRUE,
+			),
+			'user_id'	=> array(
+				'description'	=> 'ID for user',
+				'type'	=> 'varchar',
+				'length' => 8,
+				'not null'	 => TRUE,
+			),
+			'bondsid'	=> array(
+				'description'	=> 'String with all bonds ids separeted by comas',
+				'type'	=> 'text',
+				'not null'	 => TRUE,
+			),
+			'bond_num'	=> array(
+				'description'	=> 'String with all bonds ids separeted by comas',
+				'type'	=> 'text',
+				'not null'	 => TRUE,
+			),
+			'cct'	=> array(
+				'description'	=> 'Credit Card Type ej. DN',
+				'type'	=> 'varchar',
+				'length' => 2,
+				'not null'	 => TRUE,
+			),
+			'subtotal'	=> array(
+				'description'	=> 'Transaction amount generated from the order',
+				'type'	=> 'float',
+				'not null'	 => TRUE,
+			),
+			'iva'	=> array(
+				'description'	=> 'Transaction IVA amount generated from the order',	
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'ice'	=> array(
+				'description'	=> 'Transaction Special Taxes amount generated from the order',
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'interes'	=> array(
+				'description'	=> 'Transaction amount generated from the order',
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'total'	=> array(
+				'description'	=> 'Total amount transaction',
+				'type'	=> 'float',
+				'not null'	 => TRUE,
+			),
+			'aut'	=> array(
+				'description'	=> 'Authorization code generated from VPOS while run postproccess',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 10,
+				'default'	=> '',
+			),
+			'tc'	=> array(
+				'description'	=> 'Credit Type for transaction',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 2,
+				'default'	=> '',
+			),
+			'mes'	=> array(
+				'description'	=> 'Months for credit, payment differed (1,2,3)',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 2,
+				'default'	=> '',
+			),
+			'estado'	=> array(
+				'description'	=> 'Transaction TIPO (Pay or Reversed)',
+				'type'	=> 'varchar',
+				'length' => 60,
+				'not null'	 => TRUE,
+				'default'	=> '',
+			),			
+			'mensaje'	=> array(
+				'description'	=> 'Message from status - CANCEL, APPROVED, PENDING',
+				'type'	=> 'varchar',
+				'length' => 150,
+				'not null'	 => TRUE,
+				'default'	=> '',
+			),
+			'flag'	=> array(
+				'description'	=> 'It is for check the comprobation, if 0 is no verified but if it is 1 query done',
+				'type'	=> 'int',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+				'default'	=> 0,
+			),
+			'gim'	=> array(
+				'description'	=> '1 is update GIM, 0 missing update',
+				'type'	=> 'int',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+				'default'	=> 0,
+			),
+		),
+		'primary key'	=>	array('id'),
+		'indexes' => array(
+      			'txn_id' => array('txn_id'),
+    		),
+	);
+	return $schema;
+}

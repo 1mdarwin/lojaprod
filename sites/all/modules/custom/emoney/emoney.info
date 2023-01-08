@@ -1,0 +1,4 @@
+name=E-money
+description= Payment method using electronic money from Ecuador's Central Bank
+core=7.x
+

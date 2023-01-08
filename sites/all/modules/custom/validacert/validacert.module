@@ -1,0 +1,189 @@
+<?php
+//define('IP_TRAMITE', '192.168.1.153'); // test 
+define('IP_TRAMITE', '192.168.1.227'); // PROD
+define('PORT_WS_TRA', ':8080'); // PROD
+define('PORT_WS_DOC', ':8081'); // PROD
+// Ip desde la cual se llama al servicio
+
+//define('AUTH_PARAM', 'usrBA-AR:ua.ws@Sistem2'); // user:pass
+// Reciben token
+
+//define('QRY_DETAILPROCESS', '/share/s/M1AnvgzxTquPQbzsFbd7Bg'); // details process
+define('QRY_DETAILPROCESS', '/document-validation/api/documentsExternal'); // details process PROD
+define('QRY_DOCPROCESS', '/document-validation/api/documentsDownload/'); // GET DOCUMENT PDF PROD
+//define('QRY_DETAILPROCESS', '/api/documentsExternal'); // details process TEST
+//define('QRY_DOCPROCESS', '/api/documentsDownload/'); // GET DOCUMENT PDF TEST
+
+
+/**
+ * @file
+ * Web service client examples module.
+ */
+/*
+ * HOOK Help
+ */
+function validacert_help($path, $arg){
+  $help = '';
+  switch ($path) {
+    case 'admin/help#validacert':
+      $help = "<h1>Ayuda para Valida documentos </h1>";
+      $help .= t('This module is for get taxes from citizens</br>');
+      $help .= t('This module work with two webservices, from GIM and AGP systems</br>');
+      $help .= t('Include payments too');
+      break;
+    
+    default:
+      # code...
+      break;
+  }  
+  return $help;
+}
+/*
+ * Implmentation HOOK Menu
+ */
+
+function validacert_menu(){
+        // Para mantenimiento se cambia el texto a consultando, caso contrario consulta 
+  $items['tramites/valida'] = array(
+    'title' => t('Validar Trámite'),
+    'description' => t('Consultar sus tramites con su número de cédula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('consultatra_form'),
+    //'access arguments' => array('access content'),
+    'access callback' => true,
+    'file' => 'validacert.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+/*$items['tramites/valida/res'] = array(
+    'title' => t('Resultado de la consulta'),
+    'description' => t('Display content into a table with checkboxes'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('taxes_form'),    
+    //'access arguments' => array('access content'),
+    'access callback' => TRUE,
+    'file' => 'validacert.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );*/
+  $items['tramites/valida/resultado'] = array(
+      'title' => t('Resultado de la consulta'),  
+      'description' => t('Impuestos que adeuda al Municipio de Loja'),
+      'page callback' => 'resultado_consulta',
+      'access callback' => true,
+      'file' => 'validacert.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['tramites/test'] = array(
+      'title' => t('Resultado de la consulta (test)'),
+      'description' => t('Tramites Municipio de Loja'),
+      'page callback' => 'test_page',
+      'access callback' => true,
+      'file' => 'validacert.inc',
+      'type' => MENU_NORMAL_ITEM,
+  );
+  $items['tramites/descarga'] = array(
+      'title' => t('Descarga Archivo'),  
+      'page callback' => 'descarga_pdf',
+      'page arguments' => array(2),
+      'access callback' => true,
+      'file' => 'validacert.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  // Renombrar para mantenimiento lo que se encuenta en los corchetes
+  /*$items['tramites/valida'] = array(
+      'title' => t('Mantenimiento del servicio'),  
+      'description' => t('Mantenimiento periodico del servicio de consulta'),
+      'page callback' => 'mantenimientos',
+      'access callback' => true,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  */
+  return $items;  
+}
+
+/*
+ * Implmentation HOOK block_info
+ */
+function validacert_block_info(){
+  $blocks = array();
+  $blocks['impuesto'] = array(
+      'info'=>'Consulta de Impuestos'
+  );
+  return $blocks;
+}
+/*
+ * Implmentation HOOK block_view
+ */
+function validacert_block_view($delta = ''){
+  $blocks = array();
+  switch ($delta) {
+    case 'impuesto':
+      $blocks['subject'] = t('Consulta validacert');
+      $blocks['content'] = drupal_get_form('consultatra_form_block');      
+      /*$blocks['content'] = array(
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('consulta_form'),
+      );
+      */
+      break;
+  }
+  return $blocks;
+}
+/*
+ * Call function for render the block form
+ */
+function consultatra_form_block($form, &$form_state){  
+  $form['cons'] = array(
+      '#title' => t(''),
+      '#type' => 'fieldset',
+//      '#description' => t('Consulta a traves de su cedula')
+  );
+  $form['cons']['cedula'] = array(
+      '#title' => t('Número de cédula'),
+      '#type' => 'textfield',
+      '#required' => true,
+      '#maxlenght' => 10,
+      '#size' => 15,
+      '#description' => t('Digite solo numeros'),
+	);
+  $form['cons']['save'] = array(
+      '#prefix' => '<div class="consulta">',
+      '#type' => 'submit',
+      '#value' => t('Consultar'),
+  ); 
+  //$form['#theme'] = array('consulta_form_block');
+	
+  return $form;
+}
+/**
+* Send a mail 
+* HOOK_mail
+*/
+function validacert_mail($key, &$message, $params){
+  global $user;
+  $usuario = $user->name;
+  switch ($key) {
+    case 'failed':
+      //$message['to'] = $user->mail;
+      watchdog('GIM','Mail status reversed sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('Pago FALLO en GIM :: NO ACTUALIZADO');
+      $message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
+      $message['body'][] = t('Por favor actualizarlo manualmente antes del cierre de jornada.');
+      $message['body'][] = t('Municipio de Loja.');
+      break;
+   case 'success':
+      //$message['to'] = $user->mail;
+      watchdog('GIM','Mail success sent to :mailto', array(':mailto'=> $usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('PAGO GIM :: Exitoso');
+      //$message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('<h2>Hola Administrador</h2>');
+      $message['body'][] = t('<p>El pago en el sistema GIM fue exitoso.</p>');
+      $message['body'][] = t('Gracias por utilizar estos servicios.');
+      $message['body'][] = t('<p>Municipio de Loja.</p>');
+      break;
+    default:
+      # code..success .
+      break;
+  }
+}

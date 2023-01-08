@@ -1,0 +1,14 @@
+name = Sorteo de Canasta en Feria
+description = Implements contest for Loja's feria.
+package = GADMLoja
+
+core = 7.x
+
+; Simple tests
+; files[] = tests/commerce_paypal_wps.test
+
+; Information added by Drupal.org packaging script on 2014-01-14
+version = "7.x-1.0"
+core = "7.x"
+project = "gad"
+datestamp = "1389740908"

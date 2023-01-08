@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<flashradio>	
+	<THEME COLOR="#079c1c"/>
+	<CHANNEL URL="http://212.129.33.202:9854/;" TYPE="aac"/>
+	<RADIO NAME="Radio Municipal 90.1 FM -  Powered by: Estación 4" SCROLL="AUTO" AUTOPLAY="TRUE" DEBUG="FALSE" SONGTITLEURL="" INFOTEXT="HD (by estación 4 Loja) V3.15.10.31" INFOLINK="http://www.radioestacion4.com/" FIRSTSOLUTION="FLASH" SONGINFORMATIONINTERVAL="20000"/><TITLEFONT FONTNAME="" GOOGLEFONT=""/><SONGFONT FONTNAME="" GOOGLEFONT=""/>
+</flashradio>

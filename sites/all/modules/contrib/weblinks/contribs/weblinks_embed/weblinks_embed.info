@@ -1,0 +1,12 @@
+name = Web Links Embed
+description = Allows users to include a link group in a node with [links-embed: id].
+dependencies[] = weblinks
+core = 7.x
+package = Weblinks
+
+; Information added by drupal.org packaging script on 2013-06-25
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "weblinks"
+datestamp = "1372128444"
+

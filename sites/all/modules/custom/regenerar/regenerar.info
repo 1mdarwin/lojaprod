@@ -1,0 +1,4 @@
+name=regenerar
+description=Consulta de valores Regenerar
+core=7.x
+package=GADML

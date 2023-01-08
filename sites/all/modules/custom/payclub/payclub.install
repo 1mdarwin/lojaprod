@@ -1,0 +1,125 @@
+<?php
+/**
+* CREATE DATABASE FOR REGISTER VPOS TRANSACTION
+*/
+
+/**
+* Implements HOOK schema 
+*/
+function payclub_schema(){
+	$schema = array();
+	$schema['payclub_vpos'] = array(
+		'description'	=> 'Stores proccess vpos from payclub',
+		'fields' =>	array(
+			'vpos_id'	=> array(
+				'description'	=> 'Serial numeric ID of de VPOS in local table for database',
+				'type'	=> 'serial',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+			),			
+			'vpos_fec'	=> array(
+				'description'	=> 'Transaction date and time',
+				'type'	=> 'varchar',
+				'mysql_type'	=> 'datetime',
+			),			
+			'vpos_txn_id'	=> array(
+				'description'	=> 'Transaction ID generated from order',
+				'type'	=> 'varchar',
+				'length' => 10,
+				'not null'	 => TRUE,
+			),
+			'vpos_ced'	=> array(
+				'description'	=> 'ID for customer(cedula)',
+				'type'	=> 'varchar',
+				'length' => 13,
+				'not null'	 => TRUE,
+			),
+			'vpos_bondsid'	=> array(
+				'description'	=> 'String with all bonds ids separeted by comas',
+				'type'	=> 'varchar',
+				'length' => 255,
+				'not null'	 => TRUE,
+			),
+			'vpos_bond_num'	=> array(
+				'description'	=> 'String with all bonds ids separeted by comas',
+				'type'	=> 'varchar',
+				'length' => 255,
+				'not null'	 => TRUE,
+			),
+			'vpos_cct'	=> array(
+				'description'	=> 'Credit Card Type ej. DN',
+				'type'	=> 'varchar',
+				'length' => 2,
+				'not null'	 => TRUE,
+			),
+			'vpos_subtotal'	=> array(
+				'description'	=> 'Transaction amount generated from the order',
+				'type'	=> 'float',
+				'not null'	 => TRUE,
+			),
+			'vpos_iva'	=> array(
+			'description'	=> 'Transaction IVA amount generated from the order',
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'vpos_ice'	=> array(
+				'description'	=> 'Transaction Special Taxes amount generated from the order',
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'vpos_interes'	=> array(
+				'description'	=> 'Transaction amount generated from the order',
+				'type'	=> 'varchar',
+				'length' => 4,
+				'not null'	 => TRUE,
+			),
+			'vpos_total'	=> array(
+				'description'	=> 'Total amount transaction',
+				'type'	=> 'float',
+				'not null'	 => TRUE,
+			),
+			'vpos_aut'	=> array(
+				'description'	=> 'Authorization code generated from VPOS while run postproccess',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 10,
+				'default'	=> '',
+			),
+			'vpos_tc'	=> array(
+				'description'	=> 'Credit Type for transaction',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 2,
+				'default'	=> '',
+			),
+			'vpos_mes'	=> array(
+				'description'	=> 'Months for credit, payment differed (1,2,3)',
+				'type'	=> 'varchar',
+				'not null'	 => TRUE,
+				'length' => 2,
+				'default'	=> '',
+			),
+			'vpos_tipo'	=> array(
+				'description'	=> 'Transaction TIPO (Pay or Reversed)',
+				'type'	=> 'varchar',
+				'length' => 1,
+				'not null'	 => TRUE,
+				'default'	=> '',
+			),			
+			'vpos_flag'	=> array(
+				'description'	=> 'It is for check the comprobation, if 0 is no verified but if it is 1 query done',
+				'type'	=> 'int',
+				'not null'	 => TRUE,
+				'unsigned'	=> TRUE,
+				'default'	=> 0,
+			),
+		),
+		'primary key'	=>	array('vpos_id'),
+		'indexes' => array(
+      			'txn_id' => array('vpos_txn_id'),
+    		),
+	);
+	return $schema;
+}

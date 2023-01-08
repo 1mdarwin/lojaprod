@@ -1,0 +1,49 @@
+<?php
+  /**
+  *   HOOK Help
+  */
+  function certificaiml_help($path, $arg){
+/*    switch($path){
+      case: 'admin/help#certificados':
+            return "Módulo personalizado para el Municipio de Loja, el cual permite consultar las deudas de los contribuyentes y de acuerdo a esto emitir un certificado de no adeudar.<br>
+    Los URL de acceso son:
+    <ul><li><a href='".$base_url."/certificados/testpage'>".$base_url. "/certificados/testpage</a></li>".
+     "<li><a href='".$base_url."/certificados/consulta'>".$base_url. "/certificados/consulta</a></li>";
+    }*/
+  }
+  /**
+  *   HOOK menu 
+  */
+  function certificaiml_menu(){    
+    $items['certificados/testpage'] = array(
+      'title' => t('Pagina de Prueba de Certificados'),
+      'description' => t('Cerficados'),
+      'page callback' => 'testpage',
+      'access callback'  => TRUE,
+      'file' => 'certificaiml.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,      
+    );     
+    $items['certificados/consulta'] = array(
+      'title' => t('Certificado de no Adeudar'),
+      'description' => t('Cerficados'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('consultacer_form'),
+    //'access arguments' => array('access content'),
+      'access callback' => true,
+      'file' => 'certificaiml.inc',
+      'type' => MENU_NORMAL_ITEM,
+      
+    );
+    $items['certificados/res'] = array(
+      'title' => t('Resultado de la consulta'),
+      'description' => t('Cerficados'),
+      'page callback' => 'res',
+      'access callback'  => TRUE,
+      'file' => 'certificaiml.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,      
+    );   
+
+    return $items;
+  }
+  
+  

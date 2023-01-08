@@ -1,0 +1,4 @@
+name = Cedula Castastral
+description = Allow to query data from GIM database using REST web services
+core = 7.x
+package = GADMLoja

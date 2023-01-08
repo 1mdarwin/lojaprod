@@ -1,0 +1,130 @@
+<?php
+
+/**
+ * @file
+ * Custom taxpayer update module with connection for webservices SOAP.
+ */
+define('USER_GIM', 'munpayclub');
+define('PASS_GIM', 'bfc2b6f7-9eea-4368-9cb0-cde8e2da37f7');
+define('ENDPOINT_GIM', 'http://192.168.1.148:8080/gim/gimSystem?wsdl'); // 
+
+/**
+ * HOOK_help
+ */
+function taxpayerupdate_help($path, $arg){
+    $help = '';
+    switch ($path) {
+        case 'admin/help#taxpayerupdate':
+            $help = "<h1>Ayuda para Taxpayer Update GIM </h1>";
+            $help .= '<ul>';
+            $help .= '<li>' . t('Allow to get information using cedula and consume soap webservices from java system</br>') . '</li>';
+            $help .= '<li>' .t('This information will be send to moderator for update information</br>') . '</li>';
+            $help .= '<li>' .t('Build a Excel datasheet') . '</li>';
+            $help .= '</ul>';
+            break;
+        
+        default:
+            # code...
+            break;
+    }  
+    return $help;    
+}
+
+/**
+ * Implementation HOOK_menu
+ */
+function taxpayerupdate_menu(){
+    $items=[];
+    $items['taxpayer'] = array(
+        'title' => t('Solicitar actualización de datos del contribuyente'),
+        'description' => t('Allow to get information from taxpayer with cedula'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('taxpayer_form'),
+        //'access arguments' => array('access content'),
+        'access callback' => true,
+        'file' => 'taxpayerupdate.inc',
+        'type' => MENU_NORMAL_ITEM,        
+    );
+    $items['taxpayer/update'] = array(
+        'title' => t('Enviar solicitud del contribuyente'),
+        'description' => t('Allow to get information from taxpayer with cedula'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('taxpayer_up_form'),
+        //'access arguments' => array('access content'),
+        'access callback' => true,
+        'file' => 'taxpayerupdate.inc',
+        'type' => MENU_NORMAL_ITEM,        
+    );
+    $items['taxpayer/confirm'] = array(
+        'title' => t('Confirmación de envío'),  
+        'description' => t('Confirmación de envio de datos'),
+        'page callback' => 'confirm_page',
+        'access callback' => true,
+        'file' => 'taxpayerupdate.inc',
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+    );
+    $items['admin/commerce/orders/taxpayerupdate/config'] = array(
+        'title' => t('Taxpayer Update Settings'),
+        'description' => t('Enable/Disabled options for taxes query'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('taxpayerupdate_admin_form'),
+        'access arguments'  => array('administer cajap2p'),
+        'access callback'  => 'user_access',
+        'type' => MENU_NORMAL_ITEM,
+        'file' => 'taxpayerupdate.inc',
+      );
+    return $items;
+    
+}
+/**
+ * Implements hook_default_wsclient_service().
+ */
+function taxpayerupdate_default_wsclient_service() {    
+    
+    $services = array();
+    
+    $service = new WSClientServiceDescription();
+    $service->name = 'taxpayer';
+    $service->label = 'TaxPayer Update';
+    $service->url = ENDPOINT_GIM;
+  //  $service->url = 'http://190.57.168.199:8080/gim/paymentPlatform?wsdl';
+    $service->type = 'soap';
+        
+    try {
+      $service->endpoint()->initializeMetaData();
+      $services[$service->name] = $service;
+    }
+    catch (WSClientException $e) {
+      watchdog('wsclient', $e->__toString());
+    } 
+    return $services;
+  
+  }
+
+  /**
+* Send a mail 
+* HOOK_mail
+*/
+function taxpayerupdate_mail($key, &$message, $params){
+    global $user;
+    $usuario = $user->name;
+    switch ($key) {
+      case 'taxpayer':
+        //$message['to'] = $user->mail;
+        watchdog('TaxpayerUpdate','Mail for update taxpayer sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+        $message['subject'] = t('Solicitud de actualizar contribuyente');
+        $message['body'][] = '<div>'. t('Hola @username,', array('@username' => 'operador')) . '</div>';
+        $message['body'][] = '<div><strong>'.t('Datos recibidos: ').'</strong></div>';
+        $message['body'][] = '<div>' . t('Cedula: ') . $params['cedula'] . '</div>';
+        $message['body'][] = '<div>' . t('Nombres: ') . $params['lastname'] . '</div>';
+        $message['body'][] = '<div>' . t('Correo: ') . $params['email'] . '</div>';
+        $message['body'][] = '<div>' . t('Direccion: ' . $params['address']) .'</div>';
+        $message['body'][] = '<div>' . t('Telefono: ' . $params['phone']) . '</div>';        
+        $message['body'][] = '<br/><strong>' . t('Municipio de Loja.') . '</strong>';
+        break;     
+      default:
+        # code..success .
+        break;
+    }
+  }
+  

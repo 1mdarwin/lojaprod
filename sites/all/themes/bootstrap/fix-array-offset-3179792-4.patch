@@ -1,0 +1,21 @@
+diff --git a/templates/system/pager.func.php b/templates/system/pager.func.php
+index 150b163..9115d52 100644
+--- a/templates/system/pager.func.php
++++ b/templates/system/pager.func.php
+@@ -40,6 +40,16 @@ function bootstrap_pager(array $variables) {
+ 
+   global $pager_page_array, $pager_total;
+ 
++  // Nothing to do if there is no pager.
++  if (!isset($pager_page_array[$element]) || !isset($pager_total[$element])) {
++    return;
++  }
++
++  // Nothing to do if there is only one page.
++  if ($pager_total[$element] <= 1) {
++    return;
++  }
++
+   // Calculate various markers within this pager piece:
+   // Middle is used to "center" pages around the current page.
+   $pager_middle = ceil($quantity / 2);

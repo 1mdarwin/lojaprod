@@ -1,0 +1,4 @@
+filename = CargaInicial
+description = "Tiene activados los modulos necesario y configurado el IMCE, sin contenido"
+modules = block blog ckeditor color comment contact contextual ctools dashboard dblog demo demo_reset devel_generate field field_sql_storage field_ui file filter googleanalytics help image imce imce_mkdir list locale menu metatag metatag_opengraph metatag_ui node number options overlay path poll rdf redirect search shortcut system taxonomy text token toolbar translation update user views_ui admin pathauto views devel standard
+version = 1.1

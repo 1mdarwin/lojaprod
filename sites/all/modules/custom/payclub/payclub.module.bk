@@ -1,0 +1,1244 @@
+<?php
+// This version work with postprocess payment and conciliation through xml query
+// Date release: May 05 2015
+// PayClub transaction mode definitions: 36021806149401 301 mar/2018
+// 4514324035155105 445 10/2017 visa
+// 36021804637944 12 2019 895 diners -- valid
+// 6557370000521907 693 11/2020 discover
+define('PAYCLUB_TXN_MODE_LIVE', 'live');
+define('PAYCLUB_TXN_MODE_TEST', 'sandbox');
+
+// Amex transaction types
+define('PAYCLUB_OP_AUTH', 'AUTHORIZE');
+define('PAYCLUB_OP_CAPTURE', 'CAPTURE');
+define('PAYCLUB_OP_PAY', 'PAY');
+define('PAYCLUB_OP_VERIFY', 'VERIFY');
+
+define('COMMERCE_PAYMENT_STATUS_DINERS_REVIEW', 'diners_review');
+define('COMMERCE_PAYMENT_STATUS_DINERS_CANCELED', 'diners_canceled');
+define('RUC', '1160000240001');
+
+/**
+ * @file
+ * Implements PayPal Website Payments Standard in Drupal Commerce checkout.
+ */
+function payclub_menu(){
+  $items = array();
+
+  $items['payclub/ok'] = array(    
+    'page callback' => 'payclub_process_ipn',
+    'access callback'  => TRUE,
+    'type' => MENU_CALLBACK,
+
+    );
+  // Define an always accessible path to receive IPNs.
+  
+  $items['payclub/fail'] = array(
+    'title' => t('Payment PAYCLUB'),
+    'description' => t('This is a test for menu from payment method failed'),
+    'page callback' => 'payclub_process_ipn',
+    //'page callback' => 'payclub_testpage',
+    'access callback'  => TRUE,
+    'type' => MENU_CALLBACK,    
+
+    );
+  $items['payclub/pos'] = array(
+    'page callback' => 'payclub_postprocess',
+    'access callback'  => TRUE,
+    'type' => MENU_CALLBACK,    
+
+    );
+   $items['payclub/conciliar'] = array(
+    'title' => t('Conciliación PAYCLUB'),
+    'description' => t('This page is for adjust the values between Municipality and Diners'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('concilia_form'),    
+    'access arguments'  => array('administer conciliar'),
+    'access callback'  => 'user_access',
+    'type' => MENU_NORMAL_ITEM,     
+
+    );
+  $items['payclub/test'] = array(
+    'title' => t('Pruebas'),
+    'description' => t('This is a test for menu from payment method postpay'),
+//    'page callback' => 'consultaXMLauto',
+    'page callback' => 'payclub_testpage',
+    'access callback'  => TRUE,
+    'type' => MENU_NORMAL_ITEM,     
+
+    );
+ 
+  return $items;
+}
+/**
+* HOOK permission
+*/
+function payclub_permission(){
+  return array(
+    'administer conciliar' => array(
+      'title' => t('Administración de Conciliación'),
+      'description' => t('Permitir acceso para generar el archivo de conciliación'),
+      ),    
+    );
+}
+/**
+* Control query by demand and when the user visit your profile account
+*/
+function payclub_entity_view($entity, $type, $view_mode, $langcode){
+  switch($type){
+     //case 'commerce_customer_profile': dsm("This a customer profile");
+     case 'commerce_order': 
+	  $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $entity->order_number));
+ 	  if (count($transactions) > 0) {
+	    $transaction = end($transactions);
+	    if(!empty($transaction->transaction_id)){
+	      consultaXMLdemanda($transaction->transaction_id);
+	      watchdog('payclub','Query on demand for transaction ID: @txn_id',array('@txn_id' => $transaction->transaction_id),WATCHDOG_DEBUG);
+            }
+	  }
+	  break;
+  }       
+}
+/**
+* Alter the order history
+*/
+function payclub_entity_view_alter(&$build, $type){
+  switch ($type) {
+    case 'commerce_order':
+      //if ($build['#view_mode'] === 'administrator') {
+        $order = $build['#entity'];
+        $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+	$tran = end($transactions); // get the last transaction
+        $payment = get_vpos($tran->transaction_id);
+	if(!empty($payment)){
+	//dsm($payment);
+       
+        $build['status'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Payment details'),
+          '#weight' => 1,
+        );
+
+        $build['status']['markup'] = array(
+ 	  '#prefix' => '<ul>',
+          '#suffix' => '</ul>',
+          array('#markup' => sprintf('<li><strong>'.t('Tarjeta de Crédito:').'</strong> %s</li>', get_namecc($payment[0]->vpos_cct))),
+          array('#markup' => sprintf('<li>Mes (s): %s</li>', $payment[0]->vpos_mes)),
+          array('#markup' => sprintf('<li>Autorizacion Nro: %s</li>', $payment[0]->vpos_aut)),
+        );
+	} // if empty
+      //}
+      break;
+  }	
+}
+/**
+* Get Credit Card's name from abrev
+* @param $abrev
+*   Abrev for each Credit Card
+*/
+function get_namecc($abrev){
+   switch($abrev){
+	case 'DN': return "Diners Club"; break;
+	case 'DI': return "Discovery"; break;
+	case 'MC': return "Master Card"; break;
+	case 'VI': return "Visa"; break;
+   }
+}
+/**
+* For testing each new functionality
+*/
+function payclub_testpage(){
+	global $user;
+	$params = $user->name;
+	$ipn = array();
+	$ipn = $_POST;
+	$st = floatval("1507")/100;
+
+	$vpos = array();
+        $vpos['vpos_fec'] = Date("Y-m-d H:i:s");
+        $vpos['vpos_txn_id'] = "12345";
+        $vpos['vpos_ced'] = '1103756845';
+        $vpos['vpos_bondsid'] = '7654321';
+        $vpos['vpos_bond_num'] = '1234567';
+        $vpos['vpos_cct'] = "DN";
+        $vpos['vpos_subtotal'] = $st;
+        $vpos['vpos_iva'] = "";
+        $vpos['vpos_ice'] = "";
+        $vpos['vpos_interes'] = "";
+        $vpos['vpos_total'] = $st;
+        $vpos['vpos_aut'] = "54321";
+        $vpos['vpos_tc'] = "02";
+        $vpos['vpos_mes'] = "01";
+        $vpos['vpos_tipo'] = "P";
+        $vpos['vpos_flag']= 0;	
+	if(check_txnid(30)){
+	  dsm('No esta actualizado');
+	}else dsm('Ya esta actualizado');
+
+   	$SUB = "13400";
+
+ 	$subtotal = number_format(floatval($SUB)/100,2);
+        //dsm($subtotal);
+
+	//drupal_write_record('payclub_vpos',$vpos);
+
+	//drupal_mail('payclub','success',$user->mail, language_default(),$params);
+//	$order = commerce_order_load(178);
+	confirmar_gim(532); // Execute function for update GIM system with vpos_txn_id from table payclub_vpos
+  
+##	dsm($order_wrapper->commerce_order_total->value());
+//		conciliacion_api_diners();
+	return "One mail was sent to ".$user->mail;
+}
+/**
+* Form by conciliation and verification values between Municipality and VPOS (interdin)
+*/
+function concilia_form($form, &$form_state){
+  
+  $form['concilia'] = array(
+    '#title' => t('Generando archivo de Conciliación por fecha'),
+    '#description' => t('Recuerde que las conciliaciónes se deben realizar hasta las 10am'),
+    '#type' => 'fieldset',    
+  );
+  $form['concilia']['fecha'] = array(
+    '#title' => t('Fecha de conciliación'),    
+    '#type' => 'date_popup',
+    '#default_value' => date('Y-m-d'),
+    '#date_format' => 'Y-m-d',
+    '#date_label_position' => 'within',
+    '#date_increment' => 15,
+    '#date_year_range' => '0:+2',      
+  );
+  $form['concilia']['conciliar'] = array(
+    '#type' => 'submit',
+    '#value' => t('Generar Archivo'),    
+  );  
+  return $form;
+
+}
+/**
+* Validate the form sent
+*/
+function concilia_form_validate($form, &$form_state){
+
+}
+function concilia_form_submit($form, &$form_state){
+  $fec = $form_state['values']['fecha']." 08:00:00";
+  $fecm = $form_state['values']['fecha']." 23:00:00";
+  $tp = "P";
+  $txns = db_query('SELECT * 
+                  FROM payclub_vpos pc                  
+                  WHERE pc.vpos_fec >  :fec 
+		  AND pc.vpos_fec < :fecm
+		  AND pc.vpos_tipo = :tipo
+ 		  AND pc.vpos_flag = 1',
+                  array('fec' => $fec, 'fecm' => $fecm, 'tipo' => $tp))->fetchall();
+  $txns = json_decode(json_encode($txns), true);
+//  $datalive = prepareDataLive($txns);
+//  dsm($datalive);
+  $txns = prepareDataCSV($txns);
+  //write_csv($list);  
+  write_csv($txns,get_DateStr($form_state['values']['fecha']));  
+}
+/**
+* Get Only Date from String
+*/
+function get_DateStr($f){
+  return preg_replace('/[-]*/','',substr($f,0,10));
+}
+/**
+* Get Only Time from String
+*/
+function get_TimeStr($f){
+  return preg_replace('/[:]*/','',substr($f,11,9));
+}
+/**
+* Build csv file wity databaase query
+* @param $datos
+*   Array with transaction data
+* @param $fecha
+*   Date choose from form for build the file csv
+*/
+function write_csv($datos,$fecha){
+  drupal_add_http_header('Content-Type', 'text/csv');
+  //drupal_add_http_header('Content-Disposition', 'attachment;filename='.RUC.'_'.$fecha.'.csv');
+  drupal_add_http_header('Content-Disposition', 'attachment;filename=1160000240001_'.$fecha.'.csv');
+
+  $fp = fopen('php://output', 'w');
+  foreach($datos as $line){
+    fputcsv($fp, $line);
+  }
+  fclose($fp);
+  drupal_exit();
+}
+/**
+* Fill array with sort data from DB and append some elements for text file (csv)
+* @param $data
+*   Array with data for add some elements in array
+*/
+function prepareDataCSV($data){
+  $fw = array();
+  $len = sizeof($data);
+  for($i=0;$i<$len;$i++){
+
+    $fw[$i][0] = get_DateStr($data[$i]['vpos_fec']);
+    $fw[$i][1] = get_TimeStr($data[$i]['vpos_fec']);
+    $fw[$i][2] = $data[$i]['vpos_txn_id'];
+    $fw[$i][3] = $data[$i]['vpos_cct'];
+    //$fw[$i][4] = $data[$i]['vpos_subtotal'];
+    $fw[$i][4] = number_format($data[$i]['vpos_subtotal'],2);
+    $fw[$i][4] = str_replace(",","",$fw[$i][4]);
+    $fw[$i][5] = empty($data[$i]['vpos_iva']) ? '0.00' : $data[$i]['vpos_iva'];
+    //$fw[$i][5] = '0.00'; //$data[$i]['vpos_iva'];
+    $fw[$i][6] = '0.00'; //$data[$i]['vpos_ice'];
+    $fw[$i][7] = '0.00'; //$data[$i]['vpos_interes'];
+    //$fw[$i][8] = $data[$i]['vpos_total'];
+    $fw[$i][8] = number_format($data[$i]['vpos_total'],2);
+    $fw[$i][8] = str_replace(",","",$fw[$i][8]); // Delete semicolon, replacing character
+    $fw[$i][9] = $data[$i]['vpos_aut'];
+    $fw[$i][10] = RUC;
+    $fw[$i][11] = $data[$i]['vpos_tc'];
+    $fw[$i][12] = $data[$i]['vpos_mes'];
+    $fw[$i][13] = $data[$i]['vpos_tipo'];
+    $fw[$i][14] = '';
+    $fw[$i][15] = '';
+  }
+  return $fw;
+}
+/**
+* FUNCTION FOR AUTOMATICA CONCILATION DINERS
+* Separate each data with semicolon and later join them for generate one big text string
+*/
+function prepareDataLive($data){
+  $len = sizeof($data);
+  dsm($len);
+  for($i=0;$i<$len;$i++){
+    if($i == ($len-1)){
+      $eol = "X25";
+    }else{$eol ="R41D\n";}
+
+    $fw[$i][0] = get_DateStr($data[$i]['vpos_fec']) . ",";
+    $fw[$i][1] = get_TimeStr($data[$i]['vpos_fec']) . ",";
+    $fw[$i][2] = $data[$i]['vpos_txn_id'] . ",";
+    $fw[$i][3] = $data[$i]['vpos_cct'] . ",";
+    $fw[$i][4] = number_format($data[$i]['vpos_subtotal'],2) . ",";
+    $fw[$i][4] = str_replace(",","",$fw[$i][4]) . ",";
+    $fw[$i][5] = empty($data[$i]['vpos_iva']) ? '0.00' ."," : $data[$i]['vpos_iva'] . ","; 
+    $fw[$i][6] = '0.00' . ","; //$data[$i]['vpos_ice'];
+    $fw[$i][7] = '0.00' . ","; //$data[$i]['vpos_interes'];
+    $fw[$i][8] = number_format($data[$i]['vpos_total'],2) . ",";
+    $fw[$i][8] = str_replace(",","",$fw[$i][8]) . ","; // Delete semicolon, replacing character
+    $fw[$i][9] = $data[$i]['vpos_aut'] . ",";
+    $fw[$i][10] = RUC . ",";
+    $fw[$i][11] = $data[$i]['vpos_tc'] . ",";
+    $fw[$i][12] = $data[$i]['vpos_mes'] . ",";
+    $fw[$i][13] = $data[$i]['vpos_tipo'] . ",";
+    $fw[$i][14] = '' . ",";
+    $fw[$i][15] = '' ;
+    $fw[$i][16] = $eol;
+  }
+  // re-run array for get whole string
+  $len = sizeof($fw);
+  for($i=0; $i<$len; $i++){
+     for($j=0; $j<17; $j++){
+        $dato = $dato . $fw[$i][$j];
+     }
+  }
+  return $dato;
+}
+/**
+* Automatic conciliation using API Diners
+*/
+function conciliacion_api_diners(){
+  module_load_include('php','payclub','PlugInClient/PlugInClientConciliacion');
+//  prepareDataLive();
+  $dato = "20160829,092003,525,VI,162.17,0.00,0.00,0.00,166.51,930094,1160000240001,02,3,P,,X25";
+  $pluginConc = new PlugInClientConciliacion();
+  $pluginConc->setUrlServicio("https://www.optar.com.ec/NVPOS/admin.jsp");
+  $pluginConc->setRucPrincipal("1160000240001"); // RUC del grupo o establecimiento principal
+  $pluginConc->setIdGrupo("0000000330");
+  #$pluginConc->setSourceDescription("http://www.loja.gob.ec");//URL técnica
+  $pluginConc->setSourceDescription("http://www.loja.gob.ec/;");//URL técnica
+  $pluginConc->setIvVector(urldecode("hdbqDIDj91M="));
+  $pluginConc->setKey(urldecode("s9aG752wDRaPbl6XZ4ololersNXq03P3"));
+  //$pluginConc->setHttpProxy(true, "192.168.2.40", "80"); //usar esta instrucción para conexiones con proxy
+  $pluginConc->conciliar($dato);
+////  echo "Codigo: " . $pluginConc->getRespCodigo() . "<br>";
+////  echo "Descripcion: " . $pluginConc->getRespDescripcion() . "<br>";
+////  echo "Detalle: " . $pluginConc-> getRespDetalleAdicional();
+  $mensajes = "Codigo: " . $pluginConc->getRespCodigo() . "\n";
+  $mensajes = $mensajes . "Descripcion: " . $pluginConc->getRespDescripcion() . "\n";
+  $mensajes = $mensajes .  "Detalle: " . $pluginConc-> getRespDetalleAdicional();
+  dsm($mensajes);
+}
+/**
+* Save data retrieved from VPOS to local database
+*/
+function payclub_save_txnvpos($vpos){
+  $fecha = Date("Y-m-d H:i:s");
+  return drupal_write_record('payclub_vpos',$vpos); 
+}
+/*
+* PostProcess Page and desencription using payclub libraries
+*/
+function payclub_postprocess(){
+   global $user;
+   module_load_include('php','payclub','PlugInClient/TripleDESEncryption');
+   $params = $user->name;
+//   watchdog('payclub', 'Values received from VPOS Dinners. ', array(), WATCHDOG_DEBUG);    
+   $lsdata = $_POST['xmlReq'];
+   $lsdata = urldecode($lsdata);
+   $d3 = new TripleDESEncryption();
+   $llave = "s9aG752wDRaPbl6XZ4ololersNXq03P3";
+   $iv = "hdbqDIDj91M=";
+   $lsdata = $d3->decrypt($lsdata, $llave, $iv);
+   watchdog('payclub', $lsdata, array(), WATCHDOG_DEBUG);    
+
+   list($datos, $aut, $Cre,$mes,$ttar,$sub,$Iva,$Ice,$Int,$Tot,$tNo,$cD,$tipo) = explode('&', $lsdata);
+   
+   list($p0, $DATOS) = explode('=', $datos); // Reference 2 Field get from vpos (bondsId and cedula)
+   list($p1, $AUT) = explode('=', $aut); // Authorization Number from VPOS
+   list($p3, $CRE) = explode('=', $Cre);
+   list($p4, $MES) = explode('=', $mes);
+   list($p5, $TTAR) = explode('=', $ttar);
+   list($p6, $SUB) = explode('=', $sub);
+   list($p7, $IVA) = explode('=', $Iva);
+   list($p8, $ICE) = explode('=', $Ice);
+   list($p9, $INT) = explode('=', $Int);
+   list($p10, $TOT) = explode('=', $Tot);
+   list($p11, $TNO) = explode('=', $tNo);
+   list($p12, $CD) = explode('=', $cD); // Reference 1 Field get from vpos
+   list($p13, $TIPO) = explode('=', $tipo);
+
+   // Recover the order through orderID
+   $bondNumOr = explode(',',$CD);
+   $order = commerce_order_load(array_pop($bondNumOr));
+   $bondced = explode(',',$DATOS); // Convert string to array get from String with bondsIds and Ced
+   
+   $subtotal = floatval($SUB)/100;
+   $total = floatval($TOT)/100;
+
+   watchdog('payclub','Subtotal sin conversion :s',array(':s'=> $SUB),WATCHDOG_DEBUG);
+   watchdog('payclub','Subtotal :subt',array(':subt'=> $subtotal),WATCHDOG_DEBUG);
+
+   $db_up = db_query('UPDATE payclub_vpos
+                      SET vpos_cct = :cct,
+                          vpos_subtotal = :subtotal,
+                          vpos_iva = :iva,
+                          vpos_ice = :ice,
+                          vpos_interes = :interes,
+                          vpos_total = :total,
+                          vpos_aut = :aut,
+                          vpos_tc = :tc,
+                          vpos_mes = :mes,
+                          vpos_tipo = :tipo
+                        WHERE vpos_txn_id = :txn_id
+                        ', array(
+                          ':cct' => $TTAR,
+                          ':subtotal' => $subtotal,
+                          ':iva' => $IVA,
+                          ':ice' => $ICE,
+                          ':interes' => $INT,
+                          ':total' => $total,
+                          ':aut' => $AUT,
+                          ':tc' => $CRE,
+                          ':mes' => $MES,
+                          ':tipo' => $TIPO,
+                          ':txn_id' => $TNO
+                         ));
+
+   $vpos = array();
+   $vpos['vpos_txn_id'] = $TNO; 
+   $vpos['vpos_cct'] = $TTAR;
+   //$vpos['vpos_total'] = floatval($TOT)/100;
+   $vpos['vpos_total'] = $total;
+   $vpos['vpos_aut'] = $AUT; 
+   $vpos['vpos_tc'] = $CRE;
+   $vpos['vpos_mes'] = $MES;
+   $vpos['vpos_tipo'] = $TIPO;
+   $vpos['vpos_flag']= 0;
+
+   // Save retrieved from VPOS to local vpos table
+   //payclub_save_txnvpos($vpos); 
+//   drupal_write_record('payclub_vpos',$vpos);
+
+   watchdog('payclub','Datos guardados en table payclub_vpos desde el postprocess',array(),WATCHDOG_DEBUG);
+   if ($TIPO == 'P')    
+   {
+      //---------------------------------------------------
+      if(payclub_ipn_process_ec($order, $payment_method, $vpos) !== FALSE){
+        // Do payment only in Commerce
+        drupal_mail('payclub','success',$user->mail, language_default(),$params);
+        echo 'ESTADO=OK';
+	watchdog('payclub','Se imprime OK al VPOS', array(), WATCHDOG_DEBUG);
+      }      
+      //---------------------------------------------------- 
+      //drupal_mail('payclub','success',$user->mail, language_default());
+      
+   }
+   else
+   {
+      drupal_mail('payclub','reversed',$user->mail, language_default(),$params);
+      echo 'ESTADO=KO';
+      watchdog('payclub','Se imprime KO', array(), WATCHDOG_DEBUG);
+   }
+
+}
+/**
+* Send a mail 
+* HOOK_mail
+*/
+function payclub_mail($key, &$message, $params){
+  global $user;
+  $usuario = $user->name;
+  switch ($key) {
+    case 'reversed':
+      //$message['to'] = $user->mail;
+      watchdog('payclub','Mail status reversed sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('Your Transaction was reversed');
+      $message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('Dear user, your transaction was reversed because the time left so large.');
+      $message['body'][] = t('Please making the payment again until it will be successful.');
+      $message['body'][] = t('Municipio de Loja.');
+      break;
+   case 'success':
+      //$message['to'] = $user->mail;
+      watchdog('payclub','Mail success sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
+      $message['subject'] = t('Your Transaction was success');
+      //$message['body'][] = t('Hello @username,', array('@username' => $usuario));
+      $message['body'][] = t('Hello Contribuyente');
+      $message['body'][] = t('Dear user, your transaction was successful, congratulations.');
+      $message['body'][] = t('Thanks for use our Services through the Oficial Web Site.');
+      $message['body'][] = t('Municipio de Loja.');
+      break;
+    default:
+      # code..success .
+      break;
+  }
+}
+/**
+* Proccess for show message to citizens
+*/
+function payclub_process_ipn($payment_method = NULL){
+  $ipn = array();
+  $ipn = $_POST;  // Instant Payment Notification from PayClub
+  
+  //$ipn['adquirer_id'] = '11000060001';
+  if(empty($ipn['XMLRESPONSE']) || empty($ipn)){
+  //  if(empty($ipn['XMLREQUEST'])){
+  ////  watchdog('payclub', 'payclub_process IPN URL accessed with no POST data submitted from VPOS Dinners.', array(), WATCHDOG_WARNING);    
+
+    //return FALSE;
+    return "Transacción no autorizada";
+  }else{
+    module_load_include('php','payclub','PlugInClient/PlugInClientRecive');
+    module_load_include('php','payclub','PlugInClient/RSAEncryption');
+    // START RETURN VPOS
+    $xmlGenerateKey = $_POST["XMLGENERATEKEY"];
+    
+    $pluginr = new PlugInClientRecive();
+    $vector = "hdbqDIDj91M=";
+
+    $pluginr->setIV($vector);
+    //$pluginr->setSignPublicKey("file://" . realpath("/home/drw/municipio/web/mimunicipio/sites/all/modules/custom/payclub/ssl/payclub.pub.pem"));
+    $pluginr->setSignPublicKey("file://" . realpath("/var/www/lojaprod/sites/all/modules/custom/payclub/ssl/payclub/payclubpubSIGN.pem"));
+    $pluginr->setCipherPrivateKey("file://" . realpath("/var/www/lojaprod/sites/all/modules/custom/payclub/ssl/gadloja/gadprivateKEY.pem"));
+    
+    $error = $pluginr->setXMLGENERATEKEY($xmlGenerateKey);
+    
+    $msg = "";
+    if($error != "")
+    {
+      $msg = "Error:" . $error;
+      return;
+    }
+    $cadeEnc = $_POST["XMLRESPONSE"]; // For receive data
+    $firmaCorrecta = $pluginr->XMLProcess($cadeEnc, $_POST["XMLDIGITALSIGN"]);
+    if($firmaCorrecta == 0)
+    {
+      //echo "<b>Los datos han sido alterados.</b><br>";
+      return;
+    }
+    else
+    {
+      if($firmaCorrecta != 1)
+      {
+        $msg = "<br><br>Error: $firmaCorrecta";
+        return;
+      }
+      else
+        $msg = "<b>Los datos no han sido alterados.</b><br>";
+   	// watchdog('payclub', 'Los datos no han sido alterados :: Firma Correcta', array(), WATCHDOG_DEBUG);    
+    }
+
+    // END RETURN VPOS
+    //$order = commerce_order_load($ipn['order_id']);
+//    dsm($pluginr->TransacctionID);
+    //dsm($pluginr);
+    $bondsNumOr = explode(',',$pluginr->getReferencia1());
+    $order = commerce_order_load(array_pop($bondsNumOr)); // Get Order Number from pop array
+    switch($pluginr->AuthorizationState){
+	case 'Y':
+		watchdog('payclub','Actualizando GIM con txn_id :txnid',array(':txnid' => $pluginr->TransacctionID),WATCHDOG_INFO);
+    		confirmar_gim($pluginr->TransacctionID);
+		$show = "<h1>Pago Exitoso</h1>";
+		$show .= "Codigo de Autorización: ".$pluginr->AuthorizationCode;
+		$show .= "</br>Gracias por su pago... ";
+		$show .= "</br>Que tenga un buen día !!! ";
+		return $show;
+		break;
+	case 'N':
+		$show = "<h1>Pago no satisfactorio</h1>";
+		//$show .= $pluginr->ErrorDetails;
+		watchdog('payclub','Error :errorpay',array(':errorpay' => $pluginr->ErrorDetails),WATCHDOG_DEBUG);
+		$show .= "Su transacción no pudo ser procesada, por favor reintente o comuníquese con el banco emisor";
+		$show .= "Recuerde que las tarjetas crédito aceptadas son:";
+		$show .= "<ul><li>Diners, Discovery, Visa Banco Pichicha</li><li>Visa Banco de Loja</li><li>Visa Banco Rumiñahui</li></ul>";
+		$show .= "Tarjetas Aceptadas por INTERDIN (PAYCLUB)";
+		return $show;
+		break;
+    } // End switch
+//    $ipn = fillIPN($pluginr);
+
+    // Show values from $pluginr
+
+    // Update GIM
+    // registrarPagoatGIM($pluginr->TransacctionID);
+
+    // UPDATE payclub_vpos status field
+    return(t('Ha pagado sus impuestos correctamente !!!'));
+        
+    //drupal_goto('checkout/' . $order->order_id);
+  } // End else
+
+  //  1100722386    
+  
+  //module_invoke_all('commerce_paypal_ipn_process', $order, $payment_method, $ipn);   
+  
+}
+/**
+* FILL array with data from PAYCLUB
+* @param $pluginr
+*   Array returned from PayClub
+* @return $ipnr
+*   Return an array with $ipn for send it to another function
+*/
+function fillIPN ($plug){
+  $ipnr = array();
+  if(isset($plug)){
+    $ipnr['AUTHORIZATIONSTATE'] = $plug->getAuthorizationState();
+    $ipnr['AUTHORIZATIONCODE'] = $plug->getAuthorizationCode();
+    $ipnr['ERRORCODE'] = $plug->getErrorCode();
+    $ipnr['ERRORDETAILS'] = $plug->getErrorDetails();
+
+    $ipnr['TransacctionID'] = $plug->getTransacctionID();
+    $ipnr['TransacctionValue'] = $plug->getTransacctionValue();
+  }
+  return $ipnr;
+}
+
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function payclub_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['payclub_ec'] = array(
+    'base' => 'payclub',
+    'title' => t('PayClub Ecuador'),
+    'short_title' => t('PayClub EC'),
+    'description' => t('Pay Club EC Payments Standard OFF-SITE'),
+    'display_title' => t('Pay with PayClub'),
+    //'terminal' => FALSE,
+    'offsite' => TRUE,
+    'offsite_autoredirect' => TRUE,
+
+    // Because the order form generation code does not have access to a payment
+    // method info array, we set the bn directly there instead of making use of
+    // this buttonsource variable. It's here for consistency with other payment
+    // methods in this package.
+    'buttonsource' => 'CommerceGuys_Cart_PPS',
+  );
+
+  return $payment_methods;
+}
+/**
+ * Returns the default settings for the PayPal WPS payment method.
+ */
+function payclub_default_settings() {
+  $default_currency = commerce_default_currency();
+  
+  return array(
+    'merchant_id' => '1160000240001',
+    'adquirer_id' => '',
+    'local_id' => 'GN01',    
+    'currency_id' => '840',
+    'taxvalue1'   => '000',
+    //'server'    => PAYCLUB_TXN_MODE_TEST,
+    'server'    => 'sandbox',
+  );
+}
+/**
+ * Payment method callback: settings form.
+ */
+function payclub_settings_form($settings = array()) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $form = array();
+
+  // Merge default settings into the stored settings array.
+  $settings = (array) $settings + payclub_default_settings();
+
+  $form['merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#description' => t('Your Merchant ID (optional).'),
+    '#default_value' => $settings['merchant_id'],
+    '#required' => FALSE,
+  );
+  $form['adquirer_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Adquirer ID'),
+    '#description' => t('Your Adquirer ID (optional)'),
+    '#default_value' => $settings['adquirer_id'],
+    '#required' => FALSE,
+  );
+  $form['local_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Local ID'),
+    '#description' => t('Assigned from VPOS.'),
+    '#default_value' => $settings['local_id'],
+    '#required' => TRUE,
+  );
+  $form['currency_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Currency ID'),
+    '#description' => t('By default for Ecuador is 840.'),
+    '#default_value' => $settings['currency_id'],
+    '#required' => TRUE,
+  ); 
+  $form['taxvalue1'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tax Value'),
+    '#description' => t('By default is 200.'),
+    '#default_value' => $settings['taxvalue1'],
+    '#required' => TRUE,
+  );  
+
+  $form['server'] = array(
+    '#type' => 'radios',
+    '#title' => t('Transaction mode'),
+    '#description' => t('Adjust to live transactions when you are ready to start processing real payments.'),
+    '#options' => array(
+      'live' => t('Live transactions'),
+      //PAYCLUB_TXN_MODE_TEST => t('Test transactions'),
+      'sandbox' => t('Test transactions PayClub'),
+    ),
+    '#default_value' => $settings['server'],
+  );    
+
+  return $form;
+
+}
+/**
+ * Payment method callback: adds a message to the submission form if enabled in
+ * the payment method settings.
+ */
+/** 
+function payclub_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+
+  if (!empty($payment_method['settings']['show_payment_instructions'])) {
+    $form['payclub_information'] = array(
+      '#markup' => '<span class="payclub-info">' . t('(Continue with checkout to complete payment via PayClub Ecuador.)') . '</span>',
+    );
+  }
+  return $form;
+}*/
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function payclub_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  // If this checkout form contains the payment method radios...
+  if (!empty($form['commerce_payment']['payment_method']['#options'])) {
+    // Loop over its options array looking for a PayPal WPS option.
+    foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
+      list($method_id, $rule_name) = explode('|', $key);      
+
+      // If we find PayClub EC...
+      if ($method_id == 'payclub_ec') {
+        // Prepare the replacement radio button text with icons.
+        $icons = payclub_icons();
+        
+        $value = t('!logo', array('!logo' => $icons['diners']));
+	$value .= '<p>'. t('PayClub from DinersClub - pay securely without sharing your financial information through PayClub').'</p>';
+        //$value .= '<div class="commerce-payclub-icons"><span class="label">' . t('Includes:') . '</span>' . implode(' ', $icons) . '</div>';
+
+        // Add the CSS.
+        $form['commerce_payment']['payment_method']['#attached']['css'][] = drupal_get_path('module', 'payclub') . '/theme/payclub.theme.css';
+
+        break;
+
+      }
+    }
+  }
+}
+
+/**
+ * Payment method callback: redirect form, a wrapper around the module's general
+ *   use function for building a WPS form.
+ */
+function payclub_redirect_form($form, &$form_state, $order, $payment_method) {
+  // Return an error if the enabling action's settings haven't been configured.
+  if (empty($payment_method['settings']['local_id'])) {
+    drupal_set_message(t('PayClub EC is not configured for use. No PayClub Local ID has been specified and other parameters.'), 'error');
+    return array();
+  }  
+
+  $settings = array(
+    // Return to the previous page when payment is canceled
+    'cancel_return' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Specify the current payment method instance ID in the notify_url
+    'payment_method' => $payment_method['instance_id'],
+
+    // Include the application indicator
+    'bn' => $payment_method['buttonsource'],
+  );
+
+  return payclub_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
+}
+/**
+ * Builds a Website Payments Standard form from an order object.
+ *
+ * @param $order
+ *   The fully loaded order being paid for.
+ * @param $settings
+ *   An array of settings used to build out the form, including:
+ *   - server: which server to use, either sandbox or live
+ *   - local_id: the PayClub Local ID for Municipality the payment submits to
+ *   - cancel_return: the URL PayClub should send the user to on cancellation
+ *   - return: the URL PayClub should send the user to on successful payment
+ *   - currency_code: the PayClub currency code to use for this payment if the
+ *     total for the order is in a non-PayPal supported currency
+ *   - language: the PayClub language code to use on the payment form
+ *   - payment_action: the PayClub payment action to use: sale, authorization,
+ *     or order
+ *   - payment_method: optionally a payment method instance ID to include in the
+ *     IPN notify_url
+ *
+ * @return
+ *   A renderable form array.
+ */
+function payclub_order_form($form, &$form_state, $order, $settings) {
+  // Include files for VPOS
+  module_load_include('php','payclub','PlugInClient/PlugInClientSend');
+  module_load_include('php','payclub','PlugInClient/RSAEncryption');
+
+  $plugin = new PlugInClientSend();
+  
+  $vector = "hdbqDIDj91M=";
+
+
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Determine the currency code to use to actually process the transaction,
+  // which will either be the default currency code or the currency code of the
+  // order if it's supported by PayClub if that option is enabled.
+  $currency_code = 'USD';
+  $order_currency_code = $wrapper->commerce_order_total->currency_code->value();
+
+
+  /*if (!empty($settings['allow_supported_currencies']) && in_array($order_currency_code, array_keys(commerce_paypal_currencies('paypal_wps')))) {
+    $currency_code = $order_currency_code;
+  }*/
+
+  $amount = $wrapper->commerce_order_total->amount->value();
+
+  // Create new transaction with status pending for send to gateway payclub
+  $transaction = commerce_payment_transaction_new('payclub_ec', $order->order_id);
+  $transaction->amount = $amount;
+  $transaction->currency_code = $currency_code;
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  //$transaction->instance_id = $payment_method['instance_id'];
+  $transaction->instance_id = 'payclub_ec|commerce_payment_payclub_ec';
+  
+  
+  commerce_payment_transaction_save($transaction);
+
+  // Ensure a default value for the payment_method setting.
+  $settings += array('payment_method' => '');
+
+   $vpos = array();
+   $vpos['vpos_fec'] = Date("Y-m-d H:i:s");
+   $vpos['vpos_txn_id'] = $transaction->transaction_id;
+   $vpos['vpos_ced'] = $_SESSION['ced'];
+   $vpos['vpos_bondsid'] = implode(',',$_SESSION['bondsid']);
+   $vpos['vpos_bond_num'] = implode(',',$_SESSION['bondsNum']);
+   $vpos['vpos_cct'] = '';
+   $vpos['vpos_subtotal'] = floatval($amount)/100;
+   $vpos['vpos_iva'] = '';
+   $vpos['vpos_ice'] = '';
+   $vpos['vpos_interes'] = '';
+   $vpos['vpos_total'] = 0.00;
+   $vpos['vpos_aut'] = '';
+   $vpos['vpos_tc'] = '';
+   $vpos['vpos_mes'] = '';
+   $vpos['vpos_tipo'] = '';
+   $vpos['vpos_flag']= 0;
+   
+   // Save before send to VPOS to local vpos table
+   drupal_write_record('payclub_vpos',$vpos);
+
+  // Prepare variable with bondsId and Cedula getting from SESSIONS
+  $bondsidCed = implode(',',$_SESSION['bondsid']) . ','.$_SESSION['ced'];  // Recover variables from session browser
+  $bondsNumOrd = implode(',',$_SESSION['bondsNum']) . ','.$order->order_number;  // Recover variables from session 
+
+  // Start VPOS
+  $e = $plugin->setLocalID($settings['local_id']);
+  //$e = $plugin->setLocalID('GN01');
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setTransacctionID($transaction->transaction_id);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setTransacctionValue($amount);
+  if($e!= "")
+    echo "Error: $e";  
+  $e = $plugin->setTaxValue1(000);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setTaxValue2(000);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setTipValue(000);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setCurrencyID($settings['currency_id']);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setReferencia1($order->order_number); // Set BondsNumber and order Id
+  if($e!= "")
+    echo "Error: $e";  
+  $e = $plugin->setReferencia2($_SESSION['ced']); // Set BondsId and Cedula
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setReferencia3($order->order_number);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setReferencia4($order->order_number);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setReferencia5($order->order_number);
+  if($e!= "")
+    echo "Error: $e";
+  $e = $plugin->setIV($vector);
+  if($e!= "")
+    echo "Error: $e";
+  $URL_Tecnico = 'https://www.loja.gob.ec/';
+  try
+  {
+    $plugin->setSignPrivateKey("file://" . realpath("/var/www/lojaprod/sites/all/modules/custom/payclub/ssl/gadloja/gadprivateSIGN.pem"));
+    $plugin->setCipherPublicKey("file://" . realpath("/var/www/lojaprod/sites/all/modules/custom/payclub/ssl/payclub/payclubpubKEY.pem"));
+    $xmlGenerateKeyI = $plugin->CreateXMLGENERATEKEY();
+    $plugin->XMLProcess($URL_Tecnico);
+    $xmlRequest = $plugin->getXMLREQUEST();
+    $xmlFirma = $plugin->getXMLDIGITALSIGN();
+
+  }
+  catch (Exception $e)
+  {
+    echo "Error: $e";
+  }
+  // End VPOS
+
+  // Build the data array that will be translated into hidden form values.
+  
+  $data = array(
+    'XMLREQUEST'  =>  $xmlRequest,
+    'XMLDIGITALSIGN'  =>  $xmlFirma,    
+    'XMLACQUIRERID' => 'http://www.loja.gob.ec/;',
+    'XMLMERCHANTID'  => '1160000240001',
+    'XMLGENERATEKEY'  =>  $xmlGenerateKeyI,
+
+  );
+
+  // Allow modules to alter parameters of the API request.
+  drupal_alter('payclub_order_form_data', $data, $order);
+  
+  //Enable this line when the payment is ready :: DRW
+  $form['#action'] = payclub_server_url($settings['server']);
+  
+  foreach ($data as $name => $value) {
+    if (!empty($value)) {
+      $form[$name] = array('#type' => 'hidden', '#value' => $value);
+    }
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed to PayClub EC'),
+  );
+  watchdog('payclub','Se ha redirigido a PayClub para ingreso de tarjeta',array(),WATCHDOG_DEBUG);
+  return $form;
+}
+/**
+ * Payment method callback: redirect form return validation.
+ */
+function payclub_redirect_form_validate($order, $payment_method) {
+  // This may be an unnecessary step, but if for some reason the user does end
+  // up returning at the success URL with a Failed payment, go back.
+  if (!empty($_POST['payment_status']) && $_POST['payment_status'] == 'N') {
+    return FALSE;
+  }
+}
+/**
+* Payment method callback: process an IPN once it's been validated.
+*/
+function payclub_ipn_process_ec($order, $payment_method, &$ipn){
+  // Exit when we don't get a payment status we recognize.
+  
+  // If this is a prior authorization capture IPN for which we've already
+  $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+  if (count($transactions) > 0) {
+    $transaction = end($transactions);
+
+    // The next line could be for Autorization Code from VPOS
+    $transaction->remote_id = $ipn['vpos_aut'];
+    //$transaction->amount = commerce_currency_decimal_to_amount($ipn['TransacctionValue'],'USD');
+    watchdog('payclub','Monto guardado: @txn_monto',array('@txn_monto'=> $transaction->amount),WATCHDOG_INFO);
+    $transaction->amount = $ipn['vpos_total'];
+    watchdog('payclub','Monto de transaccion tomado de vpos_total: @txn_monto',array('@txn_monto'=> $transaction->amount),WATCHDOG_INFO);
+    //$transaction->amount = number_format($ipn['TransacctionValue'],2,'.','');
+    $transaction->currency_code = 'USD'; //$ipn['CurrencyID'];
+    $transaction->payload[REQUEST_TIME . '-ipn'] = $ipn;
+
+    // Set the transaction's statuses based on the IPN's payment_status.
+    $transaction->remote_status = $ipn['vpos_tipo'];
+
+    // If we didn't get an approval response code...
+    switch ($ipn['vpos_tipo']) {
+      case 'N':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+        $transaction->message = t("The payment has failed. This happens because the bank couldn't process your transaction due to : @errorcode , @errordetails", array('@errorcode' => $ipn['ERRORCODE'], '@errordetails' => $ipn['ERRORDETAILS']));
+        drupal_set_message(t($ipn['ERRORDETAILS']),'warning');
+        commerce_payment_redirect_pane_previous_page($order);
+        break;    
+
+      case 'P':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        $transaction->message = t('The payment has completed with Autorization Code: @ac and Transaction @txn', array('@ac' => $ipn['vpos_aut'],'@txn'=> $transaction->transaction_id));
+//        $transaction->message = t('The payment has completed with Autorization Code: @ac', array('@ac' => $ipn['vpos_aut']));
+//        watchdog('payclub','Procesando transaccion, estado pagado',array(),WATCHDOG_INFO);
+        break;
+
+      case 'Refunded':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        $transaction->message = t('Refund for transaction @txn_id', array('@txn_id' => $ipn['parent_txn_id']));
+        break;
+    }
+
+    // Save the transaction information.
+    commerce_payment_transaction_save($transaction);
+    $ipn['transacction_id'] = $transaction->transaction_id;
+
+    // FUNCTION FOR CONTINUE WITH THE NEXT PAGE
+    commerce_payment_redirect_pane_next_page($order);
+    watchdog('payclub', 'Payment processed for Order @order_number with Transaction ID @txn_id.', array('@txn_id' => $ipn['vpos_txn_id'], '@order_number' => $order->order_number), WATCHDOG_INFO);
+  }
+  
+}
+/**
+ * Returns the URL to the specified PayClub server.
+ *
+ * @param $server
+ *   Either sandbox or live indicating which server to get the URL for.
+ *
+ * @return
+ *   The URL to use to submit requests to the PayClub server.
+ */
+function payclub_server_url($server) {
+  switch ($server) {
+    case 'sandbox':
+      return 'https://www3.optar.ec/webmpi/vpos';
+      // return 'https://www3.interdinmpi.com.ec/webmpi/qvpos?'; // valid
+    case 'live':
+      return 'https://www.optar.com.ec/webmpi/vpos';
+      //return 'https://www.interdinmpi.com.ec/webmpi/qvpos?'; // valid
+  }
+}
+/**
+ * Formats a price amount into a decimal value as expected by PayClub.
+ *
+ * @param $amount
+ *   An integer price amount.
+ * @param $currency_code
+ *   The currency code of the price.
+ *
+ * @return
+ *   The decimal price amount as expected by PayPal API servers.
+ */
+function payclub_price_amount($amount, $currency_code) {
+  $rounded_amount = commerce_currency_round($amount, commerce_currency_load($currency_code));
+  return number_format(commerce_currency_amount_to_decimal($rounded_amount, $currency_code), 2, '.', '');
+}
+/**
+ * Returns an array of PayPal payment methods.
+ */
+function payclub_payment_methods() {
+  return array(
+    'visa' => t('Visa'),
+//    'mastercard' => t('Mastercard'),
+//    'amex' => t('American Express'),
+    'discover' => t('Discover'),
+//    'echeck' => t('eCheck'),
+    'diners' => t('Diners Club'),
+  );
+}
+
+/**
+ * Returns an array of PayPal payment method icon img elements.
+ *
+ * @param $methods
+ *   An array of PayPal payment method names to include in the icons array; if
+ *   empty, all icons will be returned.
+ *
+ * @return
+ *   The array of themed payment method icons keyed by name: visa, mastercard,
+ *   amex, discover, echeck, paypal
+ */
+function payclub_icons($methods = array()) {
+  $icons = array();
+
+  foreach (payclub_payment_methods() as $name => $title) {
+    if (empty($methods) || in_array($name, $methods, TRUE)) {
+      $variables = array(
+        'path' => drupal_get_path('module', 'payclub') . '/images/' . $name . '.gif',
+        'title' => $title,
+        'alt' => $title,
+        'attributes' => array(
+          'class' => array('paypalclub-icon'),
+        ),
+      );
+      $icons[$name] = theme('image', $variables);
+    }
+  }
+
+  return $icons;
+}
+/**
+* Implements hook_cron
+* Run automatic task for payments between Municipality and Diners
+*/
+function payclub_cron(){
+  consultaXMLauto();
+}
+/**
+* Implements conciliar saldos function
+*/
+function consultaXMLauto(){
+  $datos = array();
+  $datos = no_update(); // Get data no updated
+  if(!empty($datos)){
+    foreach($datos as $key => $value){
+      $txn_id = $value->vpos_txn_id;
+      consultaXMLdemanda( $value->vpos_txn_id);
+    }
+  }
+  watchdog('payclub', 'Se ejecuto la consulta automatica', array(), WATCHDOG_DEBUG);
+  return "Hola";
+
+}
+/**
+* Execute query by demand for transactions with payclub server
+* @param $txn_id
+*	Transaction ID for each order
+*/
+function consultaXMLdemanda($txn_id){
+    $data = array();
+    if(check_txnid($txn_id)){
+      //$url = "https://www3.interdinmpi.com.ec/webmpi/qvpos?RucEstab=".RUC."&NoTransaccion=";
+      $url = "https://www.optar.com.ec/webmpi/qvpos?RucEstab=".RUC."&NoTransaccion=";
+      $fullUrl = $url . $txn_id;
+      $data = drupal_http_request($fullUrl)->data;
+      if($data!='Recurso no encontrado. Favor intente mas tarde.'){
+         $xmlobj=simplexml_load_string($data);
+         $data = json_decode(json_encode((array) $xmlobj));
+         if($data->TRANSACCION->RESULTADO == 'OK'){
+           $tipo = 'P';
+           confirmar_gim($txn_id);
+         }else $tipo = 'R';
+         $updb = db_query('UPDATE payclub_vpos 
+                      SET vpos_flag = 1, vpos_tipo = :tipo
+                      WHERE vpos_txn_id = :id_txn
+		                  AND vpos_flag =0',
+                      array(':id_txn' => $txn_id, 'tipo'=> $tipo));
+      }
+      watchdog('payclub', $fullUrl, array(), WATCHDOG_DEBUG);
+    }else{
+      //drupal_set_message("Esta transacción ya ha sido validada anteriormente");
+    }
+}
+/**
+* Function for confirm payment and update GIM with consulta XML
+* @param $id_txn
+*   Local Transaction ID
+*/
+function confirmar_gim($id_txn){
+  if(check_txnid($id_txn)){ 
+    module_load_include('inc','impuestos'); // Call for get functions available from impuestos module
+    // Update paid taxes from GIM System
+    watchdog('payclub','Dentro de la funcion confirmar_gim .. update GIM',array(),WATCHDOG_INFO);
+    $pagado = registrarPagoatGIM($id_txn); // Enabled when the pay is done
+    $updb = db_query('UPDATE payclub_vpos 
+                      SET vpos_flag = 1
+                      WHERE vpos_txn_id = :id_txn',
+                      array(':id_txn' => $id_txn));
+  }
+}
+/**
+* Get Payment details from database
+*/
+function get_vpos($id_txn){
+  $payment = array();
+  $payment = db_query('SELECT * FROM payclub_vpos
+                            WHERE vpos_txn_id = :id_txn',
+                            array(':id_txn' => $id_txn))->fetchAll();
+  return $payment;
+}
+/**
+* Validate data from vpos that doesn't procces, is mean with flag equal 0
+* Return many values for update
+*/
+function no_update(){
+  $check = array();
+  $factual = Date("Y-m-d H:i:s"); // Current date with hours, minutes and seconds.
+  $check = db_query('SELECT vpos_id, vpos_txn_id, vpos_flag, vpos_tipo 
+    		     FROM payclub_vpos 
+		     WHERE vpos_fec < :fec
+		     AND vpos_flag = 0',
+		     array(':fec' => $factual))->fetchall();  
+  return $check;
+}
+
+/**
+* Make a verification for txn_id if it was update with flag equal 0
+* @param $txn_id
+*   Transaction ID for check status at DB
+* @return 
+*   Boolean
+*/
+function check_txnid($txn_id){
+  $check = array();
+  $check = db_query('SELECT vpos_txn_id, vpos_flag
+		     FROM payclub_vpos
+		     WHERE vpos_txn_id = :txn_id
+		     AND vpos_flag = 0',
+	             array(':txn_id' => $txn_id))->fetchall();
+  if(empty($check))
+     return false;
+  else return true;
+}

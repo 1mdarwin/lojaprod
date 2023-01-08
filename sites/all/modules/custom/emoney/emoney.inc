@@ -1,0 +1,223 @@
+<?php
+
+define('IDUSER_BCE','MAMUNILOJa1');
+define('PASSUSER_BCE','dfbb1fac21');
+
+/**
+* Test Page
+*/
+function testpage(){
+  global $user;
+  $usuario = user_load(1);
+  
+  $ced = $usuario->field_cedula_user['und'][0]['value'];
+  $cell = $usuario->field_cell_user['und'][0]['value'];
+  $serv = wsclient_service_load('emoney');
+
+  $fecha = date('Y-m-d');
+  $fechahoy = 'muni-'. strtotime(date('Y-m-d H:i:s'));
+
+$cash1 = new stdClass();
+$cas = new stdClass();
+$cas->dtoRequestCobroConfirm = new stdClass();
+
+$cash1->dtoRequestCobroPre = new stdClass();
+$cash1->dtoRequestCobroPre->amount = 10.00;
+$cash1->dtoRequestCobroPre->brandId = 1;
+$cash1->dtoRequestCobroPre->currency = 1;
+$cash1->dtoRequestCobroPre->document = "1103470892";
+$cash1->dtoRequestCobroPre->language = "ES";
+$cash1->dtoRequestCobroPre->msisdnSource = "0990148458";
+$cash1->dtoRequestCobroPre->msisdnTarget = IDUSER_BCE;
+$cash1->dtoRequestCobroPre->password = PASSUSER_BCE;
+$cash1->dtoRequestCobroPre->pin = PASSUSER_BCE;
+$cash1->dtoRequestCobroPre->user = IDUSER_BCE;
+$cash1->dtoRequestCobroPre->utfi = $fechahoy;
+dsm($cash1);
+
+$cas->dtoRequestCobroConfirm = $cash1->dtoRequestCobroPre;
+
+$cash = new stdClass();
+$cash->dtoRequestCobroConfirm = new stdClass();
+$cash->dtoRequestCobroConfirm->amount = 10.00;
+$cash->dtoRequestCobroConfirm->brandId = 1;
+$cash->dtoRequestCobroConfirm->currency = 1;
+$cash->dtoRequestCobroConfirm->document = "1103470892";
+$cash->dtoRequestCobroConfirm->language = "ES";
+$cash->dtoRequestCobroConfirm->msisdnSource = "0990148458";
+$cash->dtoRequestCobroConfirm->msisdnTarget = "AdmMunLoja01";
+$cash->dtoRequestCobroConfirm->password = "adc84f08b9";
+$cash->dtoRequestCobroConfirm->pin = "adc84f08b9";
+$cash->dtoRequestCobroConfirm->user = "AdmMunLoja01";
+$cash->dtoRequestCobroConfirm->utfi = "Mun201512171124";
+  try{
+    $result = $serv->cobroPre($cash1); 
+//    $res = $serv->cobroConfirm($cash); 
+    dsm($result);
+/*    if($result->return->codeErrorId == "-1"){
+	dsm("Ya puedes pagar");
+    }
+*/
+//    dsm($res);
+
+  }catch (WSClientException $f){
+    echo $f;
+  }
+  //confirma_gim(1244);
+  return 'Hello world';
+}
+/**
+* Process payment function
+*/
+function e_process(){
+  $respuesta = checkCredit();
+  return $respuesta;
+}
+
+/**
+* Verify if cell number is valid and has enough credit
+*/
+function checkCredit(){
+  global $user;
+  if(!isset($_POST['ced'])){
+    return "<h2>Operacion no permitida</h2>";
+  }
+
+  $ced = $_POST['ced'];
+  $amount = $_POST['amount'];
+//  $amount = 10;
+//  $amount = number_format(floatval($amount)/100,2);
+  //dsm($_SESSION['order']->order_id);
+  $order = commerce_order_load($_POST['order_id']);
+  //$order = $_SESSION['order'];
+  $usuario = user_load($user->uid);
+//  $mycell = field_get_items('user',$usuario,'field_cell_user');
+//  $cell = $mycell[0]['value'];
+  $cell = $_POST['cell'];
+
+//  $ced = $usuario->field_cedula_user['und'][0]['value'];
+  //$cell = $usuario->field_cell_user['und'][0]['value'];
+  // Call webservice
+  $serv = wsclient_service_load('emoney');
+  dsm($cell);
+  dsm($ced);
+
+  //$amount = 10.00;
+  $fechahoy = 'muni-'. strtotime(date('Y-m-d H:i:s')); // unix format
+  $cash = new stdClass();
+  $cash->dtoRequestCobroPre = new stdClass();
+ 
+  $cash1 = new stdClass();
+  $cash1->dtoRequestCobroConfirm = new stdClass();
+
+  $cash->dtoRequestCobroPre->amount = $amount;
+  $cash->dtoRequestCobroPre->brandId = 1;
+  $cash->dtoRequestCobroPre->currency = 1;
+  $cash->dtoRequestCobroPre->document = $ced;
+  $cash->dtoRequestCobroPre->language = "ES";
+  $cash->dtoRequestCobroPre->msisdnSource = $cell;
+  $cash->dtoRequestCobroPre->msisdnTarget = IDUSER_BCE;
+  $cash->dtoRequestCobroPre->password = PASSUSER_BCE;
+  $cash->dtoRequestCobroPre->pin = PASSUSER_BCE;
+  $cash->dtoRequestCobroPre->user = IDUSER_BCE;
+  $cash->dtoRequestCobroPre->utfi = $fechahoy;
+  try{
+    $result = $serv->cobroPre($cash);
+    dsm($result);
+    if($result->return->codeErrorId == "-1"){
+      $cash1->dtoRequestCobroConfirm = $cash->dtoRequestCobroPre;
+      $res = $serv->cobroConfirm($cash1);      
+      // Check if the transaction was successful
+      //....
+      if($res->return->codeErrorId == "-1"){
+        $ipn = array();
+        $ipn['codeErrorId'] = $res->return->codeErrorId;
+        $ipn['resultText'] = $res->return->resultText;
+        $ipn['total'] = $amount;
+        $mesg = "<h2>Transacción satisfactoria </h2>";
+        dsm($res);
+        if (process_emoney($order, $payment_method=NULL, $ipn) !== FALSE){
+	   // confirm payment 
+        }
+      }else{
+        $mesg = "<h2>Transacción Cancelada </h2>";
+         
+      }// End confirm return      
+      $mesg .= "<p>" . $res->return->codeErrorId . "</p>";
+      $mesg .= "<p>" . $res->return->resultText . "</p>";
+      return $mesg; 
+    }else{
+      $mesg = "<h2>Transacción no satisfactoria </h2>";
+      $mesg .= "<p>" . $result->return->codeErrorId . "</p>";
+      $mesg .= "<p>" . $result->return->resultText . "</p>";
+      return $mesg;
+    }
+  }catch (WSClientException $f){
+    echo $f;
+  }
+}
+
+/**
+* Complete the process for each order
+*/
+function process_emoney($order, $payment_method, &$ipn){
+  // Exit when we don't get a payment status we recognize.
+
+  // If this is a prior authorization capture IPN for which we've already
+  $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+  if (count($transactions) > 0) {
+    $transaction = end($transactions);
+
+    // The next line could be for Autorization Code from VPOS
+    $transaction->remote_id = $ipn['resultText'];
+    //$transaction->amount = commerce_currency_decimal_to_amount($ipn['TransacctionValue'],'USD');
+    $transaction->amount = $ipn['total'];
+    //$transaction->amount = number_format($ipn['TransacctionValue'],2,'.','');
+    $transaction->currency_code = 'USD'; //$ipn['CurrencyID'];
+    $transaction->payload[REQUEST_TIME . '-ipn'] = $ipn;
+
+    // Set the transaction's statuses based on the IPN's payment_status.
+    $transaction->remote_status = $ipn['resultText'];
+
+    // If we didn't get an approval response code...
+    switch ($ipn['codeErrorId']) {
+      case '-1':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        $transaction->message = t('The payment has completed in GAD Municipality of Loja with Autorization Code: @ac', array('@ac' => $ipn['resultText']));
+        confirma_gim($transaction->transaction_id);
+        break;
+      case 'Refunded':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        $transaction->message = t('Refund for transaction @txn_id', array('@txn_id' => $ipn['parent_txn_id']));
+        break;
+
+      default:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+        $transaction->message = t("The payment has failed. This happens because the bank couldn't process your transaction due to : @errorcode , @errordetails", array('@errorcode' => $ipn['codeErrorId'], '@errordetails' => $ipn['resultText']));
+        drupal_set_message(t($ipn['resultText']),'warning');
+        commerce_payment_redirect_pane_previous_page($order);
+        break;
+
+    }
+
+    // Save the transaction information.
+    commerce_payment_transaction_save($transaction);
+    $ipn['transacction_id'] = $transaction->transaction_id;
+
+    // FUNCTION FOR CONTINUE WITH THE NEXT PAGE
+    commerce_payment_redirect_pane_next_page($order);
+    watchdog('emoney', 'Payment processed for Order @order_number with Transaction ID @txn_id.', array('@txn_id' => $ipn['resultText'], '@order_number' => $order->order_number), WATCHDOG_INFO);
+  }
+
+}
+
+/**
+* Function for confirm payment and update GIM with consulta XML
+* @param $id_txn
+*   Local Transaction ID
+*/
+function confirma_gim($id_txn){
+  module_load_include('inc','impuestos'); // Call for get functions available from impuestos module
+  $pagado = registrarPagoatGIM($id_txn); // Enabled when the pay is done
+
+}

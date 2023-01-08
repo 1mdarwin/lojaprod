@@ -1,0 +1,4 @@
+name=Infracciones
+description=Embebido de consulta de infracciones
+core=7.x
+package=GADML

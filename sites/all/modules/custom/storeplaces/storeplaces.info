@@ -1,0 +1,4 @@
+name = Puestos Mercado
+description = Postulacion de puestos de Mercado
+core = 7.x
+dependencies[] = webform

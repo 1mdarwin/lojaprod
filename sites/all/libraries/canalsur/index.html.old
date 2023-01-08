@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>::Canal SUR - Loja Canal 39::</title>
+</head>
+<body>
+	<div align="center">
+		<script type="text/javascript" src="http://media1.cdnlayer.biz:2000/system/misc/jwplayer6/jwplayer.js?2.2.0.0"></script>
+<script type="text/javascript">jwplayer.key="EqAPzYX+HG7VL9P1/P+ROWX38LU4EkEPI1xnVFatP3qIBd96V3nW/g==";</script><div id="MediaPlayerOverview">Loading...</div>
+<script type="text/javascript">
+  jwplayer('MediaPlayerOverview').setup({
+ sources: [
+     {file: "rtmp://media1.cdnlayer.biz:1935/8454/8454"},
+   {file: "http://media1.cdnlayer.biz:1935/8454/8454/playlist.m3u8"}
+    ],
+ rtmp: {
+  bufferlength: 3,
+ },
+ title: 'Canal Sur TV - Powered by: Estación 4',
+ image: 'http://radioestacion4.com/wp-content/uploads/2016/02/estacion4_logo.png',
+ 'autostart': 'true',
+ 'width': '470',
+ 'height': '270',
+ fallback: false,
+ androidhls: true,
+ 'primary': 'html5'
+ });
+</script>               
+</body><table width="200" border="0">
+    <td><img src="http://radioestacion4.com/tvec/canalsur/movil.png" width="221" height="62"></td>
+    <td><div class="div23"><a href="http://media1.cdnlayer.biz:1935/8454/8454/playlist.m3u8" title="Ver con iphone"><img src="celulares/iphone-28x28.png" width="28" border="0" /></a></div></td>
+    <td><div class="div23"><a href="rtsp://media1.cdnlayer.biz/8454/8454" title="Ver con Andriod"><img src="celulares/android-28x32.png" width="28" border="0" /></a></div></td>
+    <td><div class="div23"><a href="rtsp://media1.cdnlayer.biz/8454/8454" title="Ver con Black Berry"><img src="celulares/blacberry-28x28.png" width="28" border="0" /></a>
+      </div></td>
+    <td><a href="http://media1.cdnlayer.biz:2000/l/?listen.8454.m3u8&proto=rtsp" alt="VLC"><img src="http://media1.cdnlayer.biz:2000/system/theme/Fluid/img/players/vlc.gif" width="28" border="0" /></a></td>
+    <td><a href="http://media1.cdnlayer.biz:2000/system/plugins/server/WowzaMedia/silverlightplayer.php?true&host_address=media1.cdnlayer.biz&unique_id=8454&servicetype=Live Streaming&StreamingPort=1935&streamname=default.stream" alt="Silverlight Player"><img src="http://media1.cdnlayer.biz:2000/system/theme/Fluid/img/players/silverlight.gif" width="28" border="0" /></a></td>
+  </tr>
+</table>
+</html>

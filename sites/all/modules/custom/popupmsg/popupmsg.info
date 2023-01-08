@@ -1,0 +1,4 @@
+name=popupmsg
+description = Show pop up messages for autheticated users after login (custom)
+core=7.x
+dependencies[] = jquery_update

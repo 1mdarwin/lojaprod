@@ -1,0 +1,12 @@
+<?xml version="1.0" standalone="yes"?>
+<aacplayer>
+	<station>Radio Municipal 90.1 FM</station>
+	<caption>Radio Municipal 90.1 FM</caption>
+	<statusscriptlink>listeners.php</statusscriptlink>
+	<facebooklink>http://www.facebook.com/radioestacion4</facebooklink>
+	<twitterlink>http://www.twitter.com/fernandozhingre</twitterlink>
+	<emaillink>mailto:ferzhr@gmail.com</emaillink>
+	<autoplay>yes</autoplay>
+	<rtmp>rtmp://media1.cdnlayer.biz:1935/8560/</rtmp>
+	<streamaddress>default.stream</streamaddress>
+</aacplayer>

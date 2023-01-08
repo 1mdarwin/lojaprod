@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>En Vivo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/LightMusicPlayer.css">
+    <script src="js/SoundCloud-API.js"></script>
+</head>
+<body>
+<div class="lightMusicPlayer middle" id="player5"></div>
+
+<script src="js/LightMusicPlayer.js" type="text/javascript"></script>
+<script>
+    $("#player1").LightMusicPlayer({
+        type:"audio",
+        title: "Starboy",
+        artist: "The Weeknd ft. Daft Punk",
+        track_URL: "music/starboy.mp3",
+        artwork_URL: "img/starboy.jpg",
+        theme:"#fff",
+        extra_Link: "https://itunes.apple.com/us/album/starboy/id1156172520",
+        artwork_blur: "1"
+    });
+    $("#player2").LightMusicPlayer({
+        type: "soundcloud",
+        SC_Client_ID: "b8f06bbb8e4e9e201f9e6e46001c3acb",
+        SC_Track_URL: "https://soundcloud.com/amirtataloo/ghahreman",
+        //artwork_blur: "5px"
+    });
+    $("#player3").LightMusicPlayer({
+        type: "spotify",
+        spotify_Track_URI: "spotify:track:21xJVN5wEbJogczYxfZhqR",
+        theme: "#000",
+        artwork_blur: "6px"
+    });
+    $("#player5").LightMusicPlayer({
+        type: "radio",
+        title: "",
+        artist:"www.loja.gob.ec",
+        track_URL: "http://104.238.193.114:7123/stream",
+        //artwork_URL: "http://grupoinfinityec.com/radiomunicipal/gbradiom.jpg",
+        artwork_URL: "http://www.loja.gob.ec/sites/all/libraries/radiomunicipal/gbradiom.jpg",
+        theme: "rgba(255,255,255,0.8)",
+        autoplay: "true"
+    });
+</script>
+</body>
+</html>

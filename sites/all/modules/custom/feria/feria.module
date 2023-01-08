@@ -1,0 +1,112 @@
+<?php
+
+define('FERIALIVE', 'live');
+define('FERIATEST', 'sandbox');
+
+
+
+/**
+ * @file
+ * Implements PayPal Website Payments Standard in Drupal Commerce checkout.
+ */
+function feria_menu(){
+  $items = array();
+  
+  $items['feria/registro'] = array(
+    'title' => t('Registro de visitas'),
+    'description' => t('This page is for adjust the values between Municipality and Diners'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('registro_form'),    
+    'access arguments'  => array('administer feria'),
+    'file' => 'feria.inc',
+    'access callback'  => 'user_access',
+    'type' => MENU_NORMAL_ITEM,     
+
+    );
+  $items['feria/win'] = array(
+    'title' => t('Canasta !!!'),
+    'description' => t('This is a test for menu from payment method postpay'),
+    'page callback' => 'presenta_ganador',
+    'access callback'  => TRUE,
+    'file' => 'feria.inc',
+    'type' => MENU_NORMAL_ITEM,     
+
+    );
+ 
+  return $items;
+}
+/**
+* HOOK permission
+*/
+function feria_permission(){
+  return array(
+    'administer feria' => array(
+      'title' => t('Administración de Registro'),
+      'description' => t('Permitir acceso para registrarse con sesion iniciada'),
+      ),    
+    );
+}
+
+/**
+* HOOK permission
+*/
+/*function feria_permission(){
+  return array(
+    'administer conciliar' => array(
+      'title' => t('Administración de Conciliación'),
+      'description' => t('Permitir acceso para generar el archivo de conciliación'),
+      ),    
+    );
+}*/
+
+/**
+ * Returns the URL to the specified PayClub server.
+ *
+ * @param $server
+ *   Either sandbox or live indicating which server to get the URL for.
+ *
+ * @return
+ *   The URL to use to submit requests to the PayClub server.
+ */
+function feria_server_url($server) {
+  switch ($server) {
+    case 'sandbox':
+      return 'https://www3.optar.ec/webmpi/vpos';
+      // return 'https://www3.interdinmpi.com.ec/webmpi/qvpos?'; // valid
+    case 'live':
+      return 'https://www.optar.com.ec/webmpi/vpos';
+      //return 'https://www.interdinmpi.com.ec/webmpi/qvpos?'; // valid
+  }
+}
+/**
+* Implements hook_cron
+* Run automatic task for payments between Municipality and Diners
+*/
+/*function feria_cron(){
+  //consultaXMLauto();
+}*/
+
+/**
+* Get Payment details from database
+*/
+/*function get_vpos($id_txn){
+  $payment = array();
+  $payment = db_query('SELECT * FROM payclub_vpos
+                            WHERE vpos_txn_id = :id_txn',
+                            array(':id_txn' => $id_txn))->fetchAll();
+  return $payment;
+}*/
+/**
+* Validate data from vpos that doesn't procces, is mean with flag equal 0
+* Return many values for update
+*/
+/*function no_update(){
+  $check = array();
+  $factual = Date("Y-m-d H:i:s"); // Current date with hours, minutes and seconds.
+  $check = db_query('SELECT id, vpos_txn_id, ticket, winner 
+    		     FROM feria 
+		     WHERE vpos_fec < :fec
+		     AND vpos_flag = 0',
+		     array(':fec' => $factual))->fetchall();  
+  return $check;
+}*/

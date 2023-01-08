@@ -1,0 +1,28 @@
+<?php
+
+/**
+* Implement HOOK_menu 
+*/
+function controlspeed_menu(){
+	$items['infracciones/consulta']=array(
+		'title' => t('Consulta de infracciones'),
+		'description' => t('Control de infracciones embebido'),
+		'page callback' => 'iml_frame',
+		'access callback' => true,
+		'type' => MENU_DEFAULT_LOCAL_TASK,
+	);
+	return $items;
+}
+/**
+* Loading iframe with service for queries from AXISCLOUD
+*/
+function iml_frame(){
+	$name = 'AxisCloud';
+	$value = 'None';
+//	$pathPage = '/cuentaunica/infracciones; samesite=None';
+	$pathPage = '/infracciones/consulta; samesite=None';
+	setcookie($name, $value, time()+36000, $pathPage, "loja.gob.ec", true, false); 
+	$servicio = "https://servicios.axiscloud.ec/ConsultaInfracciones/paginas/ConsultaInfracciones.jsp?PS_EMPRESA=14#";
+	drupal_add_js(drupal_get_path('module', 'controlspeed') . '/js/controlspeed.js'); // Set variable SameSite=None 
+	return '<iframe frameborder=0 scrolling=no height=500 src="' . $servicio . '" width="100%"></iframe>';
+}

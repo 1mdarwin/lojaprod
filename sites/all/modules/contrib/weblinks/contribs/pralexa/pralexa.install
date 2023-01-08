@@ -1,0 +1,101 @@
+<?php
+
+/**
+ * @file
+ * Weblinks add-on to fetch Google and Alexa pageranks.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function pralexa_install() {
+  // Done by Drupal core
+  // $result = drupal_install_schema('pralexa');
+  $result = 1;
+
+  // Needs to be set initially.
+  variable_set('pralexa_cron_last', 0);
+
+  if ($result > 0) {
+    drupal_set_message(st('Pralexa module installed.'));
+  }
+  else {
+    drupal_set_message(st('Pralexa table creation failed. Please "uninstall" the module and retry.'));
+  }
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function pralexa_schema() {
+  $schema['weblinks_pralexa'] = array(
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Node identifier',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        ),
+      'last_checked' => array(
+        'description' => 'Date/time of the last ranking check',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'default' => '',
+        ),
+      'pagerank' => array(
+        'description' => 'Google pagerank',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'default' => 0,
+        ),
+      'alexa' => array(
+        'description' => 'Alexa traffic rank',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'default' => 2147483647,
+        ),
+      ),
+    'primary key' => array('nid'),
+    );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function pralexa_uninstall() {
+  // drupal_uninstall_schema('pralexa');
+  variable_del('pralexa_cron_interval');
+  variable_del('pralexa_cron_last');
+  variable_del('pralexa_link_title');
+  variable_del('pralexa_links_per_cron');
+  variable_del('pralexa_rows_per_page');
+  variable_del('pralexa_show_title');
+  variable_del('pralexa_url_trim');
+  drupal_set_message(t('pralexa module uninstalled.'));
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function pralexa_update_last_removed() {
+  return 6102;
+}
+
+/**
+ * Column last_checked format is to be changed to a string.
+ */
+function pralexa_update_7000() {
+  // Change the database column last_checked to VARCHAR.
+  db_change_field('weblinks_pralexa', 'last_checked', 'last_checked', array(
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => FALSE,
+    'description' => 'Date/time of the last ranking check.',
+  ));
+
+  drupal_set_message(st('Pralexa column last_checked converted to a string.'));
+}

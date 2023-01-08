@@ -1,0 +1,605 @@
+<?php
+// This file is with out billing information form
+// Date: 04 ago, 2020
+//define('LOGIN_P2P', '85e46bb5b79eb163ce19b1aff9c02fcc'); // TEST
+//define('TRANKEY_P2P', '9EPoJ98NIr72BJ9x');              // TEST
+//define('URL_EP', 'https://test.placetopay.ec/redirection/'); // TEST
+// --------------------------- PROD ----------------------------------
+define('LOGIN_P2P', 'd332f828afeb3c29b03eae44ee58e1dd');
+define('TRANKEY_P2P', '6bRxFFi9xk7YE74Z');
+define('URL_EP', 'https://secure.placetopay.ec/redirection/'); // PROD
+
+/**
+* HOOK HELP
+*/
+function place2pay_help($path, $arg){
+	$help = '';
+	switch ($path) {
+		case 'admin/help#infoperson':
+			$help = "<h1>Actualiza información del contribuyente al sistema de recaudacion GIM</h1>";
+			$help .= t('This module is for get taxes from citizens</br>');
+			$help .= t('This module work with two webservices, from GIM and AGP systems</br>');
+			$help .= t('Include payments too');
+			break;
+		default:
+      	# code...
+      	break;
+  	}
+  	return $help;
+}
+/**
+* HOOK MENU
+*/
+function place2pay_menu(){
+  $items = array();
+	$items['place2pay/ok'] = array(
+   	'page callback' => 'place2pay_process',
+	'access callback'  => TRUE,
+	'type' => MENU_CALLBACK,
+	'file' => 'place2pay.inc',
+  );
+  // Define an always accessible path to receive IPNs.
+  
+  $items['place2pay/%/fail'] = array(
+    	'title' => t('Pago Rechazado'),
+    	'description' => t('This is a test for menu from payment method failed'),
+    	'page callback' => 'place2pay_process',
+    	//'page callback' => 'place2pay_testpage',
+    	'access callback'  => TRUE,
+    	'type' => MENU_CALLBACK,
+    	'file' => 'place2pay.inc',
+   );
+  $items['place2pay/%/pending'] = array(
+    	'title' => t('Transacción Pendiente'),
+    	'description' => t('This is a test for menu from payment method failed'),
+    	'page callback' => 'place2pay_pending',
+    	//'page callback' => 'place2pay_testpage',
+    	'access callback'  => TRUE,
+    	'type' => MENU_CALLBACK,
+    	'file' => 'place2pay.inc',
+   );
+  $items['place2pay/notificacionp2p'] = array(
+    	'page callback' => 'place2pay_notificacionp2p',
+    	'access callback'  => TRUE,
+    	'type' => MENU_CALLBACK,
+    	'file' => 'place2pay.inc',
+   );
+  $items['place2pay/requestInformation/%'] = array(
+    	'page callback' => 'place2pay_getRequestInformation',
+    	'access callback'  => TRUE,
+    	'type' => MENU_CALLBACK,
+    	'file' => 'place2pay.inc',
+   );  
+  $items['admin/commerce/orders/updgim'] = array(
+    'title' => t('GIM - P2P'),
+    'description' => t('Update GIM manually with transaction ID - txn_id'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('updGim_form'),    
+    'access arguments'  => array('administer updgim'),
+    'access callback'  => 'user_access',
+    'type' => MENU_NORMAL_ITEM,     
+    'file' => 'place2pay.inc',
+
+    );
+  $items['admin/commerce/orders/cajap2p'] = array(
+    'title' => t('Caja Placetopay'),
+    'description' => t('Check caja for payments'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cajap2p_form'),
+    'access arguments'  => array('administer cajap2p'),
+    'access callback'  => 'user_access',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'place2pay.inc',
+    );
+  $items['place2pay/cierrecaja'] = array(
+    'title' => t('Cierre de Caja Placetopay'),
+    'description' => t('This is a test for menu from payment method postpay'),
+    'page callback' => 'place2pay_cierrecaja',
+    'access arguments'  => array('administer caja'),
+    'access callback'  => 'user_access',    
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'place2pay.inc',
+
+    );
+  $items['place2pay/test'] = array(
+    	'title' => t('Sección de TEST'),
+    	'description' => t('Testing environment for payments'),
+//    'page callback' => 'consultaXMLauto',
+    	'page callback' => 'test_p2p',
+    	'access callback'  => TRUE,
+    	'type' => MENU_NORMAL_ITEM,
+    	'file' => 'place2pay.inc',
+   );
+	return $items;
+}
+/**
+* HOOK_permission
+* Allow access to URL if it has permission under roles
+*/
+function place2pay_permission(){
+  return array(
+    'administer conciliarp2p' => array(
+      'title' => t('Administración de Conciliación placetopay'),
+      'description' => t('Permitir acceso para generar el archivo de conciliación'),
+      ),    
+    'administer updgim' => array(
+      'title' => t('Actualización de GIM placetopay'),
+      'description' => t('Permitir acceso para actualizar GIM'),
+      ), 
+    'administer cajap2p' => array(
+      'title' => t('Caja Placetopay'),
+      'description' => t('Permitir acceso a cierre de caja placetopay'),
+      ),
+    );
+}
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function place2pay_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['place2pay_ec'] = array(
+    'base' => 'place2pay',
+    'title' => t('Placetopay Ecuador'),
+    'short_title' => t('Placetopay EC'),
+    'description' => t('Place2pay EC Payments Standard OFF-SITE'),
+    'display_title' => t('Payments with Placetopay'),
+    //'terminal' => FALSE,
+    'offsite' => TRUE, // avoid to redirect 
+    'offsite_autoredirect' => TRUE, // avoid to redirect    
+
+    // Because the order form generation code does not have access to a payment
+    // method info array, we set the bn directly there instead of making use of
+    // this buttonsource variable. It's here for consistency with other payment
+    // methods in this package.
+    'buttonsource' => 'CommerceGuys_Cart_PPS',
+  );
+
+  return $payment_methods;
+}
+
+/**
+ * This form allows to show all payments method before to redirect the off-site payments
+ * Implements hook_form_FORM_ID_alter().
+ * 
+ */
+function place2pay_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  global $user, $base_url;
+  $account = user_load($user->uid);
+  $checkout_page = $form_state['checkout_page'];
+  $order = $form_state['order']; //Loading from form_status
+  //dsm($checkout_page);
+  //dsm($form);
+  //dpm(module_implements('commerce_checkout_complete'));
+  //watchdog('place2pay','***********  Antes de ingresar  ***************', array(), WATCHDOG_DEBUG);
+  if($form['#form_id'] == "commerce_checkout_form_checkout"){    
+    //$form['buttons']['continue']['#validate'][] = 'place2pay_validate_check'; // validate data billing information
+    watchdog('place2pay','** Formulario checkout_checkout (datos facturacion) **', array(), WATCHDOG_INFO);
+    $orderid = commerce_cart_order_id($user->uid);
+    $order = commerce_order_load($orderid);
+    // Creating a customer profile and setting temporal information for update later
+    $profileBill = commerce_customer_profile_new('billing'); // Create new Billing profile.
+    $profileBill->uid = $user->uid;
+    $profileBill->commerce_customer_address[LANGUAGE_NONE][0]['country'] = 'EC';
+    $nombres = (isset($account->field_name_full['und'][0]['value'])? $account->field_name_full['und'][0]['value'] : 'Usuario Autenticado');
+//    $nombres = $account->field_name_full['und'][0]['value']; // Nombre Completo
+//    $profileBill->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = 'DarwinSito Betancourt';
+    $profileBill->commerce_customer_address[LANGUAGE_NONE][0]['name_line'] = $nombres;
+    $profileBill->commerce_customer_address[LANGUAGE_NONE][0]['thoroughfare'] = 'Loja';
+    $profileBill->commerce_customer_address[LANGUAGE_NONE][0]['locality'] = 'Loja';
+    commerce_customer_profile_save($profileBill); // Saving new profile.
+    $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] = $profileBill->profile_id; // Change profile id for billing
+    commerce_order_save($order);
+    $order = commerce_order_status_update($order, 'checkout_'. $checkout_page['next_page'], FALSE, TRUE, t('Redirect review process.'));
+    //dsm($order);
+    drupal_goto('checkout/' . $order->order_id . '/' . $checkout_page['next_page'] );
+  }
+  //Check the commerce_checkout_form_review form
+  //-------------------------------------------------------------
+  if($form['#form_id'] == "commerce_checkout_form_review"){
+    watchdog('place2pay','****** Formulario checkout_review (pagos)*****', array(), WATCHDOG_INFO);
+    // If this checkout form contains the payment method radios...
+    if (!empty($form['commerce_payment']['payment_method']['#options'])) {
+      // Loop over its options array looking for a PayPal WPS option.
+      foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
+        list($method_id, $rule_name) = explode('|', $key);      
+
+        // If we find Place2pay EC...
+        if ($method_id == 'place2pay_ec') {
+          // Prepare the replacement radio button text with icons.
+          $icons = place2pay_icons();
+          $orderid = commerce_cart_order_id($user->uid);
+          //module_load_include('inc','place2pay','place2pay');
+          $query = db_query('SELECT * from place2pay WHERE order_id = :orderid ORDER BY fecha DESC',array(':orderid' => $orderid))->fetchAll();
+          if (sizeof($query) > 0){ // Check if exist transaction for order ID
+             if($query[0]->estado == 'REJECTED'){ // When the user cancel the payment redirect
+              $path = $base_url . '/place2pay/'. $orderid .'/fail';
+              drupal_goto($path);
+            }
+          } 
+            
+          $value = t('!logo', array('!logo' => $icons['place2pay']));
+          $value .= '<p>'. t('Placetopay - pague de forma segura sin compartir su información financiera a través de PlacetoPay').' </p>';
+            //$value .= '<div class="commerce-payclub-icons"><span class="label">' . t('Includes:') . '</span>' . implode(' ', $icons) . '</div>';
+
+            // Add the CSS.
+          $form['commerce_payment']['payment_method']['#attached']['css'][] = drupal_get_path('module', 'payclub') . '/theme/payclub.theme.css';
+          break;
+        } // end size of
+      } // end $method_id
+    } // Empty form
+  }// End form_id  
+}
+/**
+* Custom function that validate alphanumeric caracters for each personal information field at billing information
+* placetopay validate no ascii characteres, neither puntuation
+*/
+function place2pay_validate_check($form, &$form_state){
+  //dsm($form_state);
+  $value = $form_state['input']['customer_profile_billing']['commerce_customer_address']['und'][0];
+  $nombre = $value['name_line'];
+  $direccion = $value['thoroughfare'];
+  $ciudad = $value['locality'];
+  if(!preg_match("/^[a-zA-Z áéíóúAÉÍÓÚÑñ]+$/",$nombre)){
+    form_set_error($value . '[locality]','Caracteres no permitidos en el campo nombre');
+  }
+  if(!preg_match("/^[a-zA-Z0-9 áéíóúAÉÍÓÚÑñ]+$/",$direccion)){
+    form_set_error($value .'[locality]','Caracteres no permitidos en la campo dirección');
+  }
+  if(!preg_match("/^[a-zA-Z áéíóúAÉÍÓÚÑñ]+$/",$ciudad)){
+    form_set_error($value . '[locality]','Caracteres no permitidos en la campo ciudad');
+  }
+}
+/**
+ * Implements hook_commerce_checkout_page_info().
+ */
+
+/*function place2pay_commerce_checkout_page_info() {
+  $checkout_pages = array();
+
+
+  // Define a page for checkout completion with no submit buttons on it.
+  $checkout_pages['complete'] = array(
+    'name' => t('Complete'),
+    'title' => t('Checkout complete'),
+    'weight' => 50,
+    'status_cart' => FALSE,
+    'buttons' => FALSE,
+  );
+
+  return $checkout_pages;
+}*/
+
+
+/**
+ * Implements hook_commerce_checkout_pane_info().
+ * this hook allow to create and append new pane for workflow
+ * Is necessary to clear that every pane has inside a page
+ */
+
+function place2pay_commerce_checkout_pane_info() {
+  $checkout_panes = array();
+
+/*  $checkout_panes['checkout_review'] = array(
+    'title' => t('Review'),
+    'file' => 'includes/commerce_checkout.checkout_pane.inc',
+    'base' => 'commerce_checkout_review_pane',
+    'page' => 'review',
+    'fieldset' => FALSE,
+  );
+*/
+  $checkout_panes['place2pay_completion_message'] = array(
+    'title' => t('Completion message Custom'),
+    'file' => 'includes/place2pay.checkout_pane.inc',
+    'base' => 'place2pay_completion_message_pane',
+    'page' => 'complete',
+    'fieldset' => FALSE,
+  );
+
+  return $checkout_panes;
+}
+/**
+* Custom function for Get the icons for payment methods
+* @param $methods
+*        Array that contains payment methods enalbed
+*/
+function place2pay_icons($methods = array()) {
+  $icons = array();
+
+  //foreach (place2pay_payment_methods() as $name => $title) {
+    //if (empty($methods) || in_array($name, $methods, TRUE)) {
+      $name='place2pay';
+      $title='Place2pay';
+      $variables = array(
+        'path' => drupal_get_path('module', 'place2pay') . '/images/' . $name . '.png',
+        'title' => $title,
+        'alt' => $title,
+        'attributes' => array(
+          'class' => array('place2pay-icon'),
+        ),
+      );
+      $icons[$name] = theme('image', $variables);
+    //}
+  //}
+
+  return $icons;
+}
+
+/**
+ * Payment method callback: redirect form, a wrapper around the module's general
+ *   use function for building a WPS form.
+ */
+function place2pay_redirect_form($form, &$form_state, $order, $payment_method) {
+  // Return an error if the enabling action's settings haven't been configured.
+  /*if (empty($payment_method['settings']['local_id'])) {
+    drupal_set_message(t('PayClub EC is not configured for use. No PayClub Local ID has been specified and other parameters.'), 'error');
+    return array();
+  }*/  
+  watchdog('place2pay','Redirect form to placetopay platform',array(),WATCHDOG_DEBUG);
+
+  $settings = array(
+    // Return to the previous page when payment is canceled
+    'cancel_return' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Specify the current payment method instance ID in the notify_url
+    'payment_method' => $payment_method['instance_id'],
+
+    // Include the application indicator
+    'bn' => $payment_method['buttonsource'],
+  );
+
+  return place2pay_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
+}
+
+/**
+ * Builds a Website Payments Standard form from an order object.
+ *
+ * @param $order
+ *   The fully loaded order being paid for.
+ * @param $settings
+ *   An array of settings used to build out the form, including:
+ *   - server: which server to use, either sandbox or live
+ *   - local_id: the PayClub Local ID for Municipality the payment submits to
+ *   - cancel_return: the URL PayClub should send the user to on cancellation
+ *   - return: the URL PayClub should send the user to on successful payment
+ *   - currency_code: the PayClub currency code to use for this payment if the
+ *     total for the order is in a non-PayPal supported currency
+ *   - language: the PayClub language code to use on the payment form
+ *   - payment_action: the PayClub payment action to use: sale, authorization,
+ *     or order
+ *   - payment_method: optionally a payment method instance ID to include in the
+ *     IPN notify_url
+ *
+ * @return
+ *   A renderable form array.
+ */
+function place2pay_order_form($form, &$form_state, $order, $settings) {   
+  global $user;
+  $query = db_query('SELECT * from place2pay WHERE order_id = :orderid ORDER BY fecha DESC',array(':orderid' => $order->order_id))->fetchAll();
+  watchdog('place2pay', 'Tamano consulta :larray para la orden :ordenid', array(':larray' => sizeof($query), ':ordenid'=>$order->order_id), WATCHDOG_DEBUG);
+  if (sizeof($query) > 0){
+    check_pendiente($query);
+  }
+
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $amount = $wrapper->commerce_order_total->amount->value()/100; // Divide for 100
+  $address = $wrapper->commerce_customer_billing->commerce_customer_address->value();
+  $payerP2P = $address;
+  /*dsm($order);
+  dsm($address);  
+  dsm($address['name_line']);
+  dsm($address['first_name']);
+
+  dsm($address['thoroughfare']);
+  dsm($address['locality']);
+  dsm($amount);*/
+  $usuario = user_load($order->uid);
+  module_load_include('inc','place2pay');
+  $redirectURL = '';
+  do{
+      $redirectURL = get_validP2P($payerP2P, $amount, $order); //Get valid URL from placetopay service      
+  }while(!isset($redirectURL->requestId));
+//  $redirectURL = get_validP2P($payerP2P, $amount, $order); //Get valid URL from placetopay service
+
+  $currency_code = 'USD';
+  $order_currency_code = $wrapper->commerce_order_total->currency_code->value();
+  $amount = $wrapper->commerce_order_total->amount->value();
+
+  // Create new transaction with status pending for send to gateway place2pay
+  $transaction = commerce_payment_transaction_new('place2pay_ec', $order->order_id);
+  $transaction->amount = $amount;
+  $transaction->currency_code = $currency_code;
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;  
+  $transaction->instance_id = 'place2pay_ec|commerce_payment_place2pay_ec';
+  
+  commerce_payment_transaction_save($transaction);
+  $vpos = array();
+  $vpos['fecha'] = Date("Y-m-d H:i:s");
+  $vpos['txn_id'] = $transaction->transaction_id;
+  $vpos['requestId'] = $redirectURL->requestId;
+  $vpos['cedula'] = $_SESSION['ced'];
+  $vpos['order_id'] = $order->order_id;
+  $vpos['user_id'] = $order->uid;
+  #revisar cuando son recuperados los datos de la BD
+  if(!isset($_SESSION['bondsid'])){
+  	$drec = db_query('SELECT cedula, bondsid, bond_num WHERE order_id = :orderid',array(':orderid'=> $order->order_id))->fetchAll();
+  	$vpos['bondsid']= $drec[0]->bondsid;
+  	$vpos['bond_num']= $drec[0]->bond_num;
+   }else{
+    $vpos['bondsid'] = implode(',',$_SESSION['bondsid']);
+  	$vpos['bond_num'] = implode(',',$_SESSION['bondsNum']);
+   }
+   $vpos['cct'] = '';
+   $vpos['subtotal'] = floatval($amount)/100;
+   $vpos['iva'] = '';
+   $vpos['ice'] = '';
+   $vpos['interes'] = '';
+   $vpos['total'] = 0.00;
+   $vpos['aut'] = '';
+   $vpos['tc'] = '';
+   $vpos['mes'] = '';
+   $vpos['estado'] = '';   
+   $vpos['mensaje'] = '';   
+   $vpos['flag']= 0;
+   $vpos['gim']= 0;
+   $query = db_query('SELECT * from place2pay WHERE order_id = :orderid ORDER BY fecha DESC',array(':orderid' => $order->order_id))->fetchAll();
+  //commerce_payment_redirect_pane_previous_page($order); //revisar esta seccion con IF para controlar el PENDING
+   
+   // Save data to Database before redirect to SITEOFF 
+   drupal_write_record('place2pay',$vpos);
+  
+  // Build the data array that will be translated into hidden form values.  
+  
+  #$form['#action'] = $redirectURL->processUrl;
+  watchdog('place2pay','Se ha redirigido a PlacetoPay para ingreso de tarjeta',array(),WATCHDOG_DEBUG);
+  watchdog('place2pay','Url pago :url',array(":url"=>$redirectURL->processUrl),WATCHDOG_DEBUG);
+
+  drupal_goto($redirectURL->processUrl);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed to Placetopay Ecuador'),
+  );
+  return $form;
+}
+/**
+* Check pending payment for show custom message to customer
+* @param $query fetch data from query DB
+*/
+function check_pendiente($query){
+  global $user, $base_url;
+  // comparar fecha actual con la registrada en la db
+  // comprobar el estado del pago
+  // actualizar base de datos
+  // actualizar postprocess
+  // redireccionar a pago pendiente con resumen
+  $params = $user->name;
+  module_load_include('inc','place2pay','place2pay');
+  $reqInf = pendiente($query[0]->requestId);  
+  $orderid = $query[0]->order_id;
+  if(isset($reqInf)){
+    watchdog('place2pay','check_pendiente con requestId :id', array(':id' => $query[0]->requestId), WATCHDOG_DEBUG);
+  }
+  if ($reqInf->status->status == 'PENDING'){
+    //$orderid = $query[0]->order_id;
+    watchdog('place2pay','***********  START CHECK PENDING FUNCTION  ***************', array(), WATCHDOG_DEBUG);
+    $ipn['id_order'] = $orderid;
+    $ipn['cct'] = getAbr($reqInf->payment[0]->paymentMethod);
+    $ipn['total'] = $reqInf->payment[0]->processorFields[1]->value;
+    $ipn['interes'] = 0;
+    $ipn['aut'] = $reqInf->payment[0]->authorization;
+    $ipn['tc'] = $reqInf->payment[0]->processorFields[0]->value->type;
+    $ipn['mes'] = $reqInf->payment[0]->processorFields[0]->value->installments;
+    $ipn['estado'] = $reqInf->status->status; // Return APPROVED, REJECTED, PENDING
+    $ipn['mensaje'] = $reqInf->status->message; // Return APPROVED OR REJECTED
+    $ipn['flag']= 1; // Cambia de 0 a 1 porque se hizo el getRequestInformation
+    $ipn['requestId'] = $query[0]->requestId;
+    if (postprocess($ipn) !== FALSE){
+      // Do payment only in Commerce
+      drupal_mail('place2pay','success',$user->mail, language_default(),$params);
+      //echo 'ESTADO=OK';
+      watchdog('place2pay','Se imprime OK al VPOS, estado PENDING', array(), WATCHDOG_DEBUG);
+      $path = $base_url . '/checkout/'. $orderid .'/review';
+      drupal_goto($path);
+    }
+  }else{   
+    if($query[0]->estado == 'REJECTED' || $reqInf->status->status == 'REJECTED'){ // When the user cancel the payment redirect
+      watchdog('-- Redirigiendo a cancelacion, estado REJECTED with query DB and requestInformation --', array(), WATCHDOG_INFO);
+      $path = $base_url . '/place2pay/'. $orderid .'/fail';
+      drupal_goto($path);
+    }
+  }
+  watchdog('place2pay','***********  END CHECK PENDING FUNCTION  ***************', array(), WATCHDOG_DEBUG);
+}
+/**
+* Get Payment details from database
+*/
+function get_payment_details($id_txn){
+  $payment = array();
+  $payment = db_query('SELECT * FROM place2pay
+                            WHERE txn_id = :id_txn',
+                            array(':id_txn' => $id_txn))->fetchAll();
+  return $payment;
+}
+
+/**
+* Alter the order history
+*/
+function place2pay_entity_view_alter(&$build, $type){
+  switch ($type) {
+    case 'commerce_order':
+      //if ($build['#view_mode'] === 'administrator') {
+        $order = $build['#entity'];
+        $transactions = commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id));
+        //dsm($transactions);
+        $tran = end($transactions); // get the last transaction
+	      module_load_include('inc','place2pay','place2pay');
+        $payment = get_payment_details($tran->transaction_id);
+        if(!empty($payment)){
+          //dsm($payment);
+          $build['status'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Payment details'),
+            '#weight' => 1,
+          );
+
+          $build['status']['markup'] = array(
+           '#prefix' => '<ul>',
+           '#suffix' => '</ul>',
+           array('#markup' => sprintf('<li>'.t('Tarjeta de Crédito:').' %s</li>', get_nameccp2p($payment[0]->cct))),
+           array('#markup' => sprintf('<li>Mes (s): %s</li>', $payment[0]->mes)),
+           array('#markup' => sprintf('<li>Autorizacion Nro: %s</li>', $payment[0]->aut)),
+          );
+        } // if empty
+      //}
+      break;
+  }
+}
+/**
+* HOOK_user_login
+* Control the when the user log in the website
+*/
+function place2pay_user_login(&$edit, $account){
+  $userid = $account->uid;
+  $qryOrders = db_query('SELECT * from place2pay WHERE flag = 0 AND user_id = :userid ORDER BY fecha', array(':userid' => $userid))->fetchAll();
+  //$_SESSION['ced'] = $qryOrders[0]->cedula;
+  /*drupal_set_message(t('Tiene un pago pendiente, haga <a href="@user-order">click aqui</a> para retomarlo.', array(
+      '@user-order' => url("checkout/{$qryOrders[0]->order_id}/review", array(
+        'query' => drupal_get_destination(),
+        'fragment' => 'edit-timezone',
+      )),
+   )));*/
+} 
+/**
+* Implements hook_cron
+* Run automatic task for payments between Municipality and Diners
+*/
+function place2pay_cron(){
+  $hora = date("h:i"); // hours and minutes
+  if($hora > "01:00" && $hora< "04:00"){
+    conciliacion_api_place2pay();
+    watchdog('conciliacion','Conciliacion automatica a las '. $hora .'',array(),WATCHDOG_INFO);
+  }
+  /*$hora = date("H:i"); // hours and minutes
+  if($hora > "15:00" && $hora< "22:00"){
+    watchdog('GIM','Hora de actualizacion GIM a las '. $hora .'',array(),WATCHDOG_INFO);
+    update_missing_gim();
+  }
+  //consultaXMLauto();
+  */
+}
+function conciliacion_api_place2pay(){
+  $datos = array();
+  /*$datos = no_update(); // Get data no updated
+  if(!empty($datos)){
+    foreach($datos as $key => $value){
+      $txn_id = $value->vpos_txn_id;
+      consultaXMLdemanda( $value->vpos_txn_id);
+    }
+  }*/
+  watchdog('place2pay', 'Se ejecuto la consulta automatica place2pay', array(), WATCHDOG_DEBUG);
+  return "Hola";
+}

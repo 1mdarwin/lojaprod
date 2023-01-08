@@ -1,0 +1,38 @@
+<?php
+
+/**
+* HOOK help
+*/
+function qemoney_menu(){
+  $items['emoney/test'] = array(
+      'title' => t('Pagina de Prueba - Emoney'),
+      'description' => t('Impuestos que adeuda al Municipio de Loja'),
+      'page callback' => 'test_page',
+      'access callback' => true,
+      'file' => 'qemoney.inc',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['emoney/consulta'] = array(
+    'title' => t('Consulta de Impuestos'),
+    'description' => t('Consultar sus impuestos con su número de cédula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('consultando_form'),
+    //'access arguments' => array('access content'),
+    'access callback' => true,
+    'file' => 'qemoney.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['emoney/res'] = array(
+    'title' => t('Consulta de Impuestos'),
+    'description' => t('Consultar sus impuestos con su número de cédula'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('taxese_form'),
+    //'access arguments' => array('access content'),
+    'access callback' => true,
+    'file' => 'qemoney.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+
+  return $items;
+}
