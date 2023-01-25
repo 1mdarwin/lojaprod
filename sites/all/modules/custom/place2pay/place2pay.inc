@@ -925,7 +925,7 @@ function cajap2p_form($form, &$form_state){
     '#date_format' => 'Y-m-d',
     '#date_label_position' => 'within',
     '#date_increment' => 15,
-    '#date_year_range' => '-2:+2',      
+    '#date_year_range' => '-4:+2',      
   );
   $form['caja']['conciliar'] = array(
     '#type' => 'submit',
