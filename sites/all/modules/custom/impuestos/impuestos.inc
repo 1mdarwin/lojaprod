@@ -430,9 +430,9 @@
 	    '#suffix' => '<div class="nuevacon"><a class="nueva" href="'.$base_url.'/consulta">Nueva Consulta</a></div>
 			  <div class="notas">
 			    <p><strong>RECUERDE:</strong> Se pueden efectuar pagos con tarjeta de crédito en DIFERIDO desde 10 USD en adelante</p>
-			    <p><strong></strong>Pagos con tarjeta de débito y crédito, en CORRIENTE HASTA 300 USD con cualquier tarjeta de
+			    <p><strong></strong>Pagos con tarjeta de débito y crédito, en CORRIENTE HASTA 500 USD con cualquier tarjeta de
 débito, tarjeta de crédito Diners club, Discover, Visa y Mastercard de cualquier banco Nacional</p>
-			    <div><strong>Tarjetas Aceptadas:</strong> 
+			    <div><strong>Tarjetas Aceptadas en diferido:</strong> 
 				<ul>
 				  <li><strong>Diners Club:</strong> emitidas en el Ecuador siglas ZD</li>
 				  <li><strong>Discover Card:</strong> emitida por Diners Club del Ecuador</li>

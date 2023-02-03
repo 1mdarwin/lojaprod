@@ -496,7 +496,7 @@ function pendiente($requestId){
 * This function show a multilevel Array, is better if you have enable the dev module
 */
 function place2pay_getRequestInformation(){
-  // $reqId = '191062';
+  // $reqId = '21141967';
   $reqId = arg(2);
   if(isset($reqId)){
   dsm('requestId: '.$reqId);
