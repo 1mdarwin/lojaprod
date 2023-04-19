@@ -6,9 +6,8 @@ hidden = TRUE
 dependencies[] = entity_translation
 dependencies[] = pathologic
 
-; Information added by Drupal.org packaging script on 2015-11-23
-version = "7.x-3.1"
+; Information added by Drupal.org packaging script on 2023-04-19
+version = "7.x-3.2"
 core = "7.x"
 project = "pathologic"
-datestamp = "1448248461"
-
+datestamp = "1681874421"
