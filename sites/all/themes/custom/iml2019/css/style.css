@@ -597,6 +597,11 @@ ul.flippy{
   border-bottom:thin dashed #dbdbdb;
   padding-bottom:3px;
 }
+.lotaip {
+  background: #ddf4ff;
+  border-radius: 10px;
+  padding: 5px;
+}
 .tramites h2{  
   background: url('../images/tramites.png')no-repeat scroll 0 0 transparent;
   padding-left: 50px;
