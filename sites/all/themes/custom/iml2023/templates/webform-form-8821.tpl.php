@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * Customize the display of a complete webform.
+ *
+ * This file may be renamed "webform-form-[nid].tpl.php" to target a specific
+ * webform on your site. Or you can leave it "webform-form.tpl.php" to affect
+ * all webforms on your site.
+ *
+ * Available variables:
+ * - $form: The complete form array.
+ * - $nid: The node ID of the Webform.
+ *
+ * The $form array contains two main pieces:
+ * - $form['submitted']: The main content of the user-created form.
+ * - $form['details']: Internal information stored by Webform.
+ *
+ * If a preview is enabled, these keys will be available on the preview page:
+ * - $form['preview_message']: The preview message renderable.
+ * - $form['preview']: A renderable representing the entire submission preview.
+ */
+?>
+<?php
+  // Print out the progress bar at the top of the page
+  print drupal_render($form['progressbar']);
+
+  // Print out the preview message if on the preview page.
+  if (isset($form['preview_message'])) {
+    print '<div class="messages warning">';
+//    print drupal_render($form['preview_message']);
+    print '</div>';
+  }
+// Print out the main part of the form.
+  // Feel free to break this up and move the pieces within the array.
+//  dsm($form);
+  ?>
+
+  <div class="col-xs-12 col-sm-12 col-md-6">
+  <?php
+  print drupal_render($form['submitted']['names_pro']);
+  print drupal_render($form['submitted']['ced_pro']);
+  ?>
+  </div>
+  <div class="col-xs-12 col-sm-12 col-md-6">
+  <?php
+  print drupal_render($form['submitted']['contacto']);
+  ?>
+  </div>
+
+  <div class="col-xs-12 col-sm-12 col-md-6">
+  <?php
+  print drupal_render($form['submitted']['info_casa']);
+  ?>
+  </div>
+  <div class="col-xs-12 col-sm-12 col-md-6">
+  <?php
+  print drupal_render($form['submitted']['capacidad_de_hospedaje']);
+//  print drupal_render($form['submitted']['capacidad_de_hospedaje']['individuales_con_bano']);
+  ?>
+    <div class="col-xs-12 col-sm-12 col-md-6">
+    <?php
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['individuales_con_bano']);
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['bipersonales_con_bano']);
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['tripersonales_con_bano']);
+    ?>
+    </div>
+
+    <div class="col-xs-12 col-sm-12 col-md-6">
+    <?php 
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['individuales_sin_bano']);
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['bipersonales_sin_bano']);
+      print drupal_render($form['submitted']['capacidad_de_hospedaje']['tripersonales_sin_bano']);
+    ?>
+    </div>
+
+
+  </div>
+  
+  <div class="col-xs-12 col-sm-12 col-md-12">
+  <?php
+  print drupal_render($form['action']['submit']);
+  ?>
+  </div>
+
+
+<?php
+  // Always print out the entire $form. This renders the remaining pieces of the
+  // form that haven't yet been rendered above (buttons, hidden elements, etc).
+  print drupal_render_children($form);
+
