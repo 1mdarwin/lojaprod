@@ -33,7 +33,7 @@ h1{
   font-family: 'PT Sans', arial, sans-serif, Helvetica;
 }
 h2{
-  color: #268bc6;
+  color: #C89705;
   text-transform: uppercase;
   font-size:1.8em;
   font-family:'PT Sans';
@@ -55,11 +55,16 @@ h3{
   height:auto;
 }
 .btn-primary{
-  background:#53c8ff;
-  border-color:#53c8ff;
+  background:#C89705;
+  border-color:#C89705;
 }
 .btn-primary:hover{
   background: #39423d;
+}
+.btn-info{
+  background-color: #C89705;
+  border: 1px solid #C89705;
+  opacity: 0.7;
 }
 /**
 * MENU
@@ -68,7 +73,7 @@ h3{
   background: rgba(255,255,255, 0.8);
 }
 .navbar-nav ul.sm-nowrap > li > a:hover{
-  background: #268bc6;
+  background: #C89705;
   color: #fff;
 }
 .navbar-default{
@@ -91,8 +96,8 @@ h3{
   text-transform: uppercase;
 }
 .navbar-nav>li>a:hover{
-  border-bottom:2px solid #268bc6;
-  background: #268bc6;
+  border-bottom:2px solid #C89705;
+  background: #C89705;
 }
 /*.navbar-default .navbar-nav > .active > a, 
 .navbar-default .navbar-nav > .active > a:focus, 
@@ -105,12 +110,12 @@ h3{
 }*/
 .navbar-nav .active>a,
 .navbar-default .navbar-nav > .open > a:hover{
-  background: #268bc6;
+  background: #C89705;
 }
 
 ul.navbar-nav{
   margin-top: 10px;
-  background:#263a73;
+  background:#BD1622;
 }
 .navbar-nav>li{
   /*border-right: thin solid #39423d;*/
@@ -119,8 +124,8 @@ ul.navbar-nav{
 .nav .active>a, 
 .nav .open>a:focus, 
 .nav .open>a:hover{
-  border-bottom: 2px solid #268bc6;
-  background: #268bc6 !important;
+  border-bottom: 2px solid #C89705;
+  background: #C89705 !important;
   color: #FFF !important;
 }
 /**
@@ -200,7 +205,7 @@ ul.navbar-nav{
   background: #BA55D3;  
 }
 .convocatorias{
-  background: #263a73;
+  background: #C89705;
   padding: 5px;
   box-shadow: 0px 5px 3px rgba(0,0,0, 0.5);
   border-radius:0px 0px 10px 10px;
@@ -211,7 +216,7 @@ ul.navbar-nav{
   font-size: 1.8em;
 }
 .frmregenerar{
-  border: 1px solid #263a73;
+  border: 1px solid #BD1622;
   text-align: center;
   background: #268bc6;
   color: #fff;
@@ -224,7 +229,7 @@ ul.navbar-nav{
 }
 .frmregenerar a:hover{
   background:#dbdbdb;
-  color:#263a73 !important;
+  color:#BD1622 !important;
 }
 .eventos h2{
   background: url('../images/icon-calendar1.png') no-repeat scroll left center transparent;    
@@ -249,9 +254,10 @@ ul.navbar-nav{
   text-align:center;
 }
 .panel-title a{
-  color:#fff !important;
+  color: #fff !important;
   display:block;
 }
+
 /*----------------------------------------- 
 REGION SIDEBAR SECOND
 ------------------------------------------*/
@@ -268,8 +274,6 @@ REGION SIDEBAR SECOND
 li.media{
   margin: 0;
 }
-
-
 .fullwidthbanner-container {
   height: auto;
 }
@@ -284,7 +288,7 @@ li.media{
   z-index: 10;
 }
 .flex-control-paging li a.flex-active{
-  background: #268bc6;
+  background: #BD1622;
 }
 .flex-control-paging li a{
   background: #dbdbdb;
@@ -317,12 +321,12 @@ li.media{
   display:inline;
 }
 .panel-heading{
-  background:#268bc6 !important;
+  background:#C89705 !important;
   color:#FFF !important;
 }
 .btn-default{
   color:#FFF;
-  background-color: #268bc6;
+  background-color: #C89705;
 }
 .totalremision{
   text-align:right;
@@ -342,7 +346,7 @@ li.media{
 }
 .nuevacon a{
   padding:7px 15px;
-  background:#268bc6;
+  background:#C89705;
   border-radius:5px;
   color:#FFF;
 }
@@ -371,7 +375,7 @@ li.media{
   font-size:1.1em;
 }
 .manualpagos a{
-  background:#268bc6;
+  background:#C89705;
   color:#fff;
   border-radius:10px;
   display:block;
@@ -416,7 +420,7 @@ li.media{
 }
 table{
   border:0;
-  border-bottom:2px solid #268bc6;
+  border-bottom:2px solid #C89705;
   width:100%;
 }
 table caption{
@@ -426,17 +430,14 @@ table caption{
   font-size: 1.3em;
   text-indent: 10px;
   /*background: url('../images/bg_caption.jpg') no-repeat scroll right 0 transparent;*/
-  background: #268bc6; /* For browsers that do not support gradients */
-  background: -webkit-linear-gradient(rgba(38, 139, 198, 0),rgba(38, 139, 198, 1)); /* For Safari 5.1 to 6.0 */
-  background: -o-linear-gradient(rgba(38, 139, 198, 1),rgba(38, 139, 198, 0)); /* For Opera 11.1 to 12.0 */
-  background: -moz-linear-gradient(rgba(38, 139, 198, 1),rgba(38, 139, 198, 0)); /* For Firefox 3.6 to 15 */
-  background: linear-gradient(rgba(38, 139, 198, 1),rgba(38, 139, 198, 0)); /* Standard syntax */
+  background: #C89705; /* For browsers that do not support gradients */
   height: 45px;
-  border-top: thin solid #268bc6;
+  border-top: thin solid #C89705;
+  border-radius: 5px 5px 0 0;
 }
 table th{
   /*background: url('../images/bg_th2.jpg') no-repeat scroll right #269abc;*/
-  background: #263a73; /* For browsers that do not support gradients */  
+  background: #BD1622; /* For browsers that do not support gradients */  
   color: #FFF;
   padding: 0 5px;
   height: 40px;
@@ -453,7 +454,7 @@ table th a{
   color:#FFF;
 }
 thead tr{
-  border-bottom: 3px solid #268bc6;
+  border-bottom: 3px solid #C89705;
 }
 table tr.even{
   background: #eee;
@@ -471,7 +472,7 @@ table td{
 * TABS
 */
 .nav-tabs>li.active>a{
-  background:#268bc6;
+  background:#BD1622;
   color:#FFF;
 }
 .news-related{
@@ -485,8 +486,8 @@ ul.flippy{
 }
 .flippy .prev, 
 .flippy .next{
-  background:#268bc6 !important;
-  border:1px solid #53c8ff;
+  background:#C89705 !important;
+  border:1px solid #C89705;
   border-radius:5px;
   margin:5px;
 }
@@ -502,7 +503,7 @@ ul.flippy{
   color:#fff !important;
 }
 .field-type-taxonomy-term-reference{
-  background: #268bc6;
+  background: #BD1622;
   border-radius: 5px;
   padding-left: 10px
 }
@@ -514,10 +515,11 @@ ul.flippy{
   color:#39423d;
 }
 .noticias .more-link a, .servicios .more-link a, .tramites .more-link a{
-  color: #39423d;
+  color: #FFF;
   padding: 0 50px;
-  background: #ddf4ff;
+  background: #C89705;
   border-radius:5px;
+  opacity: 0.7;
 }
 .noticias .more-link, .servicios .more-link, .tramites .more-link {
   text-align: center;
@@ -533,7 +535,7 @@ ul.flippy{
   width:100%;
 }
 .noticias .thumbnail {
-  border-color:#53c8ff;
+  border-color:#BD1622;
   overflow: hidden;
 }
 .noticias .thumbnail img {
@@ -552,7 +554,7 @@ ul.flippy{
 }
 .fecha{
   font-size:0.8em;
-  color:#268bc6;
+  color:#BD1622;
 }
 .noticias img{
   border-radius:5px;
@@ -566,7 +568,7 @@ ul.flippy{
   transition: color .2s ease-in;
 }
 .noticias .views-field-title a:hover{
-  color: #263a73;
+  color: #BD1622;
   text-decoration:none;
   font-weight:700;
 }
@@ -597,11 +599,6 @@ ul.flippy{
   border-bottom:thin dashed #dbdbdb;
   padding-bottom:3px;
 }
-.lotaip {
-  background: #ddf4ff;
-  border-radius: 10px;
-  padding: 5px;
-}
 .tramites h2{  
   background: url('../images/tramites.png')no-repeat scroll 0 0 transparent;
   padding-left: 50px;
@@ -620,7 +617,7 @@ ul.flippy{
 .servicios h2{
   font-size:1.4em;
   color: #fff;
-  background: #263a73;
+  background: #C89705;
   padding: 5px;
   text-align: center;
 }
@@ -687,7 +684,7 @@ ul.flippy{
   border-top: thin solid #eee;
 }
 .eventos{
-  background:#263a73;
+  background:#BD1622;
   padding:0 5px;
   border-bottom: 2px solid #96ba40;
 }
@@ -747,7 +744,7 @@ ul.flippy{
 .submitted{
   border-bottom:1px dashed #dbdbdb;
   margin-bottom:10px;
-  color: #263a73;
+  color: #BD1622;
   font-size:0.9em;
 }
 .content img{
@@ -759,13 +756,13 @@ ul.flippy{
   margin: 5px;
 }
 .row .content a{
-  color: #263a73;
+  color: #BD1622;
 }
 .row .content a:hover{
   color: #268bc6;
 }
 a{
-  color:#263a73;
+  color:#BD1622;
 }
 a:hover{
   color:#268bc6;
@@ -774,7 +771,7 @@ a:hover{
   width:100%;
 }
 .calendar-calendar .month-view .full td.date-box.today {
-  background:#96ba40;
+  background:#BD1622;
   color:#FFF;
 }
 #faq h2{
@@ -795,8 +792,8 @@ a:hover{
 }
 /* vistas VIEWS y filtros expuestos*/
 .views-submit-button button{
-   background: #268bc6;
-   border: 1px solid #268bc6;
+   background: ##C89705;
+   border: 1px solid ##C89705;
 }
 .views-exposed-form{
    background: #eee;
@@ -806,10 +803,6 @@ a:hover{
 }
 .view-tramites-populares .item-list, .online{
    border-bottom:thin dashed #dbdbdb;
-}
-/* banner servicios en linea */
-.views-field-field-ba-imagen{
-   padding-bottom: 30px;
 }
 /**
 * COMMENTS
@@ -1009,8 +1002,11 @@ footer #block-panels-mini-pie{
   margin-top: 20px;
   border-radius:0px 0px 10px 10px;
 }
-footer h2, footer a{
-  color: #263a73;
+footer h2{
+  color: #BD1622;
+}
+footer a{
+  color: #333;
 }
 footer a:hover{
   color: #268bc6;
@@ -1095,10 +1091,10 @@ footer .pane-content {
     padding-bottom:40.25%;
   }
   .mainmenu{
-    background: #263a73;
+    background: #BD1622;
   }
   .searchbox{
-    top: 100px;
+    top: 45px;
     float: right;
     width: 20em;
     position: relative;
