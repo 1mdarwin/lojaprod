@@ -55,7 +55,7 @@ function impuestos_menu(){
     'description' => t('Enable/Disabled options for taxes query'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('impuestos_admin_form'),
-    'access arguments'  => array('administer cajap2p'),
+    'access arguments'  => array('administer settingsp2p'),
     'access callback'  => 'user_access',
     'type' => MENU_NORMAL_ITEM,
     'file' => 'impuestos.inc',
@@ -89,6 +89,18 @@ function impuestos_menu(){
   );
   
   return $items;  
+}
+/**
+* HOOK_permission
+* Allow access to URL if it has permission under roles
+*/
+function impuestos_permission(){
+  return array(
+    'administer settingsp2p' => array(
+      'title' => t('Settings Impuestos'),
+      'description' => t('Permitir poner en mantenimiento la consulta de impuestos'),
+      ),
+    );
 }
 
 /*
