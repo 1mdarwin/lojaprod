@@ -77,6 +77,18 @@ function taxpayerupdate_menu(){
     
 }
 /**
+* HOOK_permission
+* Allow access to URL if it has permission under roles
+*/
+function taxpayerupdate_permission(){
+  return array(
+    'administer settingstaxpayer' => array(
+      'title' => t('Settings TaxpayerUpdate'),
+      'description' => t('Permitir poner en mantenimiento actualizacion de nombres '),
+      ),
+    );
+}
+/**
  * Implements hook_default_wsclient_service().
  */
 function taxpayerupdate_default_wsclient_service() {    
