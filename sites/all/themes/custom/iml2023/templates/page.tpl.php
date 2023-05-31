@@ -100,7 +100,7 @@
     </div>
     <div class="searchbox"> <?php  print render($search_box); ?></div>
   </div>
-  <div class="container1 mainmenu">
+  <div class="<?php print $container_class; ?> mainmenu">
     <?php if (!empty($primary_nav) || !empty($secondary_nav) || !empty($page['navigation'])): ?>
       <div class="navbar-collapse collapse ">
         <nav role="navigation">
@@ -129,7 +129,7 @@
   </div>
 </header>
 <?php print render($page['header']); ?>
-<div class="main-container container">
+<div class="main-container <?php print $container_class; ?>">
 
   <header role="banner" id="page-header">
     <?php if (!empty($site_slogan)): ?>
@@ -176,6 +176,6 @@
 
   </div>
 </div>
-<footer class="footer container">
+<footer class="footer <?php print $container_class; ?>">
   <?php print render($page['footer']); ?>
 </footer>

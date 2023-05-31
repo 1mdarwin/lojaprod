@@ -2062,7 +2062,7 @@ function simplenews_help($path, $arg) {
       }
       $help .= '</ul>';
 
-      $help .= "<p>" . t('For more information, see the online handbook entry for <a href="@handbook">Simplenews</a>.', array('@handbook', 'http://drupal.org/node/197057')) . "</p>\n";
+      $help .= "<p>" . t('For more information, see the online handbook entry for <a href="@handbook">Simplenews</a>.', array('@handbook' => 'http://drupal.org/node/197057')) . "</p>\n";
       return $help;
     case 'node/add/simplenews':
       $help = '<ul>';
