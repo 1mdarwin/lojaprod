@@ -67,7 +67,7 @@
           $elm = $(this);
           if($elm.hasClass('animated')) { return true; } // if already animated skip to the next item
           topcoords = $elm.offset().top; // element's distance from top of page in pixels
-          if(wintop > (topcoords - (winheight*.75))) {
+          if(wintop > (topcoords - (winheight*.95))) {
             // animate when top of the window is 3/4 above the element
             $elm.addClass('animated');
           }

@@ -614,10 +614,14 @@ ul.flippy{
   text-transform: uppercase;
   color:#39423d;
 }*/
+.servicios {
+  margin-bottom:10px;
+}
 .servicios h2{
   font-size:1.4em;
   color: #fff;
   background: #C89705;
+  border-radius:5px 5px 0 0;
   padding: 5px;
   text-align: center;
 }
