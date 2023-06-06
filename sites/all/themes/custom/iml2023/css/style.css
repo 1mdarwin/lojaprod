@@ -209,6 +209,7 @@ ul.navbar-nav{
   padding: 5px;
   box-shadow: 0px 5px 3px rgba(0,0,0, 0.5);
   border-radius:0px 0px 10px 10px;
+  margin-top: 10px;
 }
 .convocatorias h2, .eventos h2{
   color: #FFF;
@@ -1025,6 +1026,13 @@ footer h2{
 }
 footer .pane-content {
   margin-top: 20px;
+}
+.address,
+.phone,
+.fax,
+.mail,
+.casilla{
+    margin-bottom:5px;
 }
 .address{
     background: url('../images/icon-address.png') no-repeat scroll left 0.3em transparent;
