@@ -7,6 +7,9 @@
 
 /**
  * Menu callback for general reporting.
+ *
+ * @return string
+ *   Themed report page.
  */
 function linkchecker_admin_report_page() {
 
@@ -42,6 +45,12 @@ function linkchecker_admin_report_page() {
 
 /**
  * Menu callback for author specific reporting.
+ *
+ * @param object $account
+ *   The user account.
+ *
+ * @return string
+ *   Themed report page.
  */
 function linkchecker_user_report_page($account) {
   drupal_set_title($account->name);
@@ -63,7 +72,8 @@ function linkchecker_user_report_page($account) {
   $subquery2->distinct();
   $subquery2->fields('ll', array('lid'));
 
-  if (variable_get('linkchecker_scan_comments', 0)) {
+  $comment_types = linkchecker_scan_comment_types();
+  if (!empty($comment_types)) {
     // Build query for broken links in nodes and comments of the current user.
     $subquery3 = db_select('comment', 'c');
     $subquery3->innerJoin('linkchecker_comment', 'lc', 'lc.cid = c.cid');
@@ -145,7 +155,7 @@ function _linkchecker_report_page($query, $account = NULL) {
     // display it, for reasons explained in _linkchecker_link_access(). We
     // still need to fill the table row, though, so as not to throw off the
     // number of items in the pager.
-    if (empty($nids) && empty($cids) && empty($bids)) {
+    if ($nids === FALSE && $cids === FALSE && $bids === FALSE) {
       $rows[] = array(array('data' => t('Permission restrictions deny you access to this broken link.'), 'colspan' => count($header)));
       continue;
     }
@@ -157,22 +167,28 @@ function _linkchecker_report_page($query, $account = NULL) {
       $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => drupal_get_destination()));
     }
 
-    // Show link to nodes having this broken link.
-    foreach ($nids as $nid) {
-      $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => drupal_get_destination()));
+    if (empty($nids) && empty($cids) && empty($bids)) {
+      $links[] = t('This link was not found in any content.');
     }
-
-    // Show link to comments having this broken link.
-    if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
-      foreach ($cids as $cid) {
-        $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => drupal_get_destination()));
+    else {
+      // Show link to nodes having this broken link.
+      foreach ($nids as $nid) {
+        $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => drupal_get_destination()));
       }
-    }
 
-    // Show link to blocks having this broken link.
-    if ($access_administer_blocks) {
-      foreach ($bids as $bid) {
-        $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/structure/block/manage/block/' . $bid . '/configure', array('query' => drupal_get_destination()));
+      // Show link to comments having this broken link.
+      $comment_types = linkchecker_scan_comment_types();
+      if (module_exists('comment') && !empty($comment_types)) {
+        foreach ($cids as $cid) {
+          $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => drupal_get_destination()));
+        }
+      }
+
+      // Show link to blocks having this broken link.
+      if ($access_administer_blocks) {
+        foreach ($bids as $bid) {
+          $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/structure/block/manage/block/' . $bid . '/configure', array('query' => drupal_get_destination()));
+        }
       }
     }
 
