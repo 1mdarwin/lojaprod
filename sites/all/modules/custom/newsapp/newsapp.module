@@ -1,0 +1,117 @@
+<?php 
+/**
+  * HOOK_services_resources
+  */
+function newsapp_services_resources() {
+    return array(
+      'listnews' => array(
+        'operations' => array(
+           'index' => array(
+            'help'             => t('Retrieves sellers information from operations.'),                      
+            'callback'         => 'get_news',
+            'access callback' => 'user_access',
+            'access arguments' => array('access content'),
+            'access arguments append' => FALSE,
+            //'file'             => array('file' => 'sellers', 'module' => 'shoppistaservices'),
+            'args' => array(
+            array(
+              'name' => 'fn',  
+              'type' => 'string',
+              'description' => 'Function to perform',
+              'source' => array('path' => '0'), 
+              'optional' => TRUE,
+              'default' => '0',
+              ),
+            ),
+           ),
+        ),
+      )
+    );
+}
+/**
+ * HOOK_menu
+ */
+function newsapp_menu(){
+  $items = array();
+  $items['api/test'] = array(
+     'title' => t('Pruebas'),
+     'description' => t('Pruebas de WebService REST'),
+     'page callback' => 'listnews_test',
+    'access callback' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+
+  );
+  return $items;
+}
+/**
+ * Test page
+ */
+function listnews_test(){
+  global $base_url;
+  dsm($base_url);
+  $consulta ="SELECT node.nid AS nid, node.changed AS node_changed, 
+                       node.title AS node_title, 
+                       file_managed.uri AS foto 
+                FROM {node} node 
+                LEFT JOIN {field_data_field_foto_story} field_data_field_foto_story 
+                    ON node.nid = field_data_field_foto_story.entity_id 
+                INNER JOIN {file_managed} file_managed 
+                    ON field_data_field_foto_story.field_foto_story_fid = file_managed.fid 
+                WHERE (( (node.status = '1') AND (node.type IN  ('story')) )) 
+                ORDER BY node_changed DESC,
+    node_changed DESC LIMIT 5 OFFSET 0";
+
+    $res = db_query($consulta)->fetchAll();
+    $newslist = array();
+    // dsm($res);
+    foreach($res as $news){      
+      $newslist[] = array(
+      'url'  => $base_url . '/node/'. $news->nid,
+      'photo'   => $base_url . '/files/' . substr($news->foto,9),
+      'title' => $news->node_title,
+      'modified'    => $news->node_changed        
+      );   
+    }
+    dsm($newslist);   
+  return 'Hola mundo, esto es un test';
+}
+
+
+/**
+  * Function for get array places for return list of places for each category at get_entertainment function  
+  * @return array
+  *
+  */
+  function get_news(){
+    global $base_url;
+    $news = array();    
+            // field_data_field_foto_story entity_id
+            // file_managed tid
+    $consulta ="SELECT node.nid AS nid, node.changed AS node_changed, 
+                       node.title AS node_title, 
+                       file_managed.uri AS foto 
+                FROM {node} node 
+                LEFT JOIN {field_data_field_foto_story} field_data_field_foto_story 
+                    ON node.nid = field_data_field_foto_story.entity_id 
+                INNER JOIN {file_managed} file_managed 
+                    ON field_data_field_foto_story.field_foto_story_fid = file_managed.fid 
+                WHERE (( (node.status = '1') AND (node.type IN  ('story')) )) 
+                ORDER BY node_changed DESC,
+    node_changed DESC LIMIT 5 OFFSET 0";
+
+    $res = db_query($consulta)->fetchAll();
+    $newslist = array();
+    // dsm($res);
+    foreach($res as $news){      
+      $newslist[] = array(
+      'url'  => $base_url . '/node/'. $news->nid,
+      'photo'   => $base_url . '/files/' . substr($news->foto,9),
+      'title' => $news->node_title,
+      'modified'    => $news->node_changed        
+      );   
+    }    
+    $news = json_decode(json_encode($newslist), True);
+    
+
+    return $news;
+  }

@@ -1,0 +1,12 @@
+name= News App
+description= Services REST for App Municipal - List News with images
+package = GADMLoja
+core = 7.x
+
+; Simple tests
+; files[] = tests/commerce_paypal_wps.test
+
+version = "7.x-2.4"
+core = "7.x"
+project = "gad"
+datestamp = "1536161201"
