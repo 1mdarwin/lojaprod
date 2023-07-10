@@ -457,9 +457,13 @@ table th a{
 thead tr{
   border-bottom: 3px solid #C89705;
 }
-table tr.even{
+table tr:nth-child(even){
   background: #eee;
 }
+table tr:nth-child(odd){
+  background: #FFF;
+}
+
 table td{
   padding: 10px;
   border: thin solid #dbdbdb;
