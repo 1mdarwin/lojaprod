@@ -433,13 +433,13 @@ function concilliation_gim_p2p(){
       $ipn['flag']= 1; // Cambia de 0 a 1 porque se hizo el getRequestInformation
       $ipn['requestId'] = $requestId;	
       $params = $ipn;
-      drupal_mail('place2pay','concilliation',$user->mail, language_default(), $params);
+      // drupal_mail('place2pay','concilliation',$user->mail, language_default(), $params);
       watchdog('Concilliation', 'Order :id and month :mes', array(':id' => $ipn['id_order'], ':mes'=> $ipn['mes']), WATCHDOG_INFO);
       // Load Customer profile for update with datagram from RequestInfomation method              
       commerce_order_save($order); // Saving Order
       if(postprocess($ipn) !== FALSE){
         // Do payment only in Commerce
-        drupal_mail('place2pay','concilliation',$user->mail, language_default(), $params);
+        // drupal_mail('place2pay','concilliation',$user->mail, language_default(), $params);
         //echo 'ESTADO=OK';
         watchdog('Concilliation','Se imprime OK al VPOS, paso el postproceso', array(), WATCHDOG_DEBUG);
       }
