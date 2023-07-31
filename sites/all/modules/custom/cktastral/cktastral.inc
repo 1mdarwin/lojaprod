@@ -134,9 +134,10 @@ function show_table_codes(){
   
   $table = '<table style="border:1px;">';
   $table .= '<caption>'.$codes[0]->residentName. ' - '.$_SESSION['ced'].'</caption>';
-  $table .= '<thead><tr><th>Num</th><th>Código (click)</th><th>Descargar PDF</th><th>Barrio</th><th>Referencia</th></tr></thead>';
+  $table .= '<thead><tr><th>Num</th><th>Cédula</th><th>Código (click)</th><th>Descargar PDF</th><th>Barrio</th><th>Referencia</th></tr></thead>';
   for($i=0; $i<sizeof($codes);$i++){
     $table .= '<tr><td>Código propiedad '. ($i+1) .'</td>';
+    $table .= '<td>'. $codes[$i]->cadastralCode .'</td>';
     $table .= '<td><a href="/ktastro/code/'. $codes[$i]->propertyId . ' ">'.$codes[$i]->propertyId.'</a></td>';
     $table .= '<td><a class="ckpdf" href="/ktastro/code/'. $codes[$i]->propertyId . '/pdf "></a></td>';
     $table .= '<td>'.$codes[$i]->neighborhood.'</td>';
