@@ -927,6 +927,10 @@ function cajap2p_form($form, &$form_state){
     '#date_increment' => 15,
     '#date_year_range' => '-4:+2',      
   );
+  $form['caja']['old'] = array(
+    '#title' => t('Payclub (plataforma anterior 2015-2019)'),
+    '#type' => 'checkbox'
+  );
   $form['caja']['conciliar'] = array(
     '#type' => 'submit',
     '#value' => t('Generar cierre'),    
@@ -972,6 +976,20 @@ function place2pay_cierrecaja(){
       AND pc.fecha < :fecm
       AND pc.estado = 'APPROVED' ",
                   array('fec' => $fec, 'fecm' => $fecm))->fetchall();
+  // Query for old values from payclub table (2015-2019)
+  if(isset($_POST['old'])){
+    $txns = db_query("SELECT vpos_txn_id as txn_id, 
+                             vpos_fec as fecha, 
+                             vpos_ced as cedula, 
+                             vpos_subtotal as subtotal, 
+                             vpos_cct as cct, 
+                             vpos_aut as aut                             
+                  FROM payclub_vpos pc
+                  WHERE pc.vpos_fec >  :fec
+      AND pc.vpos_fec < :fecm
+      AND pc.vpos_aut != '' ",
+                  array('fec' => $fec, 'fecm' => $fecm))->fetchall();
+  }
   $t = sizeof($txns);  
   $tvisa = 0;
   $tdiners =0;
@@ -1016,8 +1034,13 @@ function place2pay_cierrecaja(){
     $s .= '<td text-align"right">'. $txns[$i]->subtotal .'</td>';
     $s .= '<td>'. $txns[$i]->cct .'</td>';
     $s .= '<td>'. $txns[$i]->aut .'</td>';
-    $s .= '<td>'. $txns[$i]->order_id .'</td>';
-    $s .= '<td>'. $txns[$i]->estado .'</td>';
+    if(!isset($_POST['old'])){
+      $s .= '<td>'. $txns[$i]->order_id .'</td>';
+      $s .= '<td>'. $txns[$i]->estado .'</td>';
+    }else{
+      $s .= '<td>'. 'Order Id' .'</td>';
+      $s .= '<td>'. 'APPROVED' .'</td>';
+    }
 
   }
   $s .= '</tbody></table>'; 
