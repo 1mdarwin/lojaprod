@@ -47,7 +47,7 @@ function webform_rules_webform_submission_delete($node, $submission) {
 /**
  * Implements of hook_form_alter().
  */
-function webform_rules_form_alter(&$form, $form_state, $form_id) {
+function webform_rules_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'webform_client_form_') !== FALSE) {
     // Add custom submit handler to webform form.
     $form['#submit'][] = 'webform_rules_client_form_submit';
@@ -209,17 +209,44 @@ function webform_rules_token_info() {
  */
 function webform_rules_tokens($type, $tokens, array $data = array(), array $options = array()) {
   $replacements = array();
-  if ($type == 'webform') {
-    $component_names = array_keys($data[$type]['components']);
+  if ($type == 'webform' && is_array($data['webform'])) {
+    // Get component attributes.
+    $webform_node = reset($data[$type]);
+    if (empty($webform_node->nid)) {
+      return $replacements;
+    }
+    $webform = node_load($webform_node->nid);
+    $components = $webform->webform['components'];
+    //component['value'] have to be like array([0] => xxx)
+    foreach ($webform_node->data as $cid => $val) {
+      $c_key = $components[$cid]['form_key'];
+      $webform_node->$c_key = array(
+        'nid' => $components[$cid]['nid'],
+        'cid' => $cid,
+        'pid' => $components[$cid]['pid'],
+        'form_key' => $c_key,
+        'name' => $components[$cid]['name'],
+        'type' => $components[$cid]['type'],
+        'value' => $val,
+        'extra' => $components[$cid]['extra'],
+        'required' => $components[$cid]['required'],
+        'weight' => $components[$cid]['weight'],
+        'page_num' => $components[$cid]['page_num'],
+        );
+    }
+
+    $components = get_object_vars($webform_node); //Convert object into array
+    $component_names = array_keys($components); //Read machine-readable-name of components
+
     foreach ($tokens as $name => $original) {
       if ($name == 'sid') {
-        $replacements[$original] = $data[$type]['sid'];
+        $replacements[$original] = $webform_node->sid;
       }
       elseif ($name == 'data') {
-        $replacements[$original] = webform_rules_prepare_component_value($data[$type]);
+        $replacements[$original] = webform_rules_prepare_component_value($webform_node);
       }
       elseif ($name == 'data-raw') {
-        $replacements[$original] = webform_rules_prepare_component_value($data[$type], TRUE);
+        $replacements[$original] = webform_rules_prepare_component_value($webform_node, TRUE);
       }
       else {
         // Split token name to get the components name.
@@ -231,8 +258,13 @@ function webform_rules_tokens($type, $tokens, array $data = array(), array $opti
         // Join token name (without component name).
         $token = implode('-', $token);
         // Webform component.
-        $component = $data[$type]['components'][$component_name]['component'];
-        $component_value = $data[$type]['components'][$component_name]['value'];
+        $component = $webform_node->$component_name;
+        $component_value = $component['value'];
+
+        //Use value as default
+        if (empty($token)) {
+          $token = 'value';
+        }
         switch ($token) {
           case 'title':
             $replacements[$original] = $component['name'];

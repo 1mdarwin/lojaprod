@@ -38,6 +38,7 @@ function bootstrap_pager(array $variables) {
   $parameters = $variables['parameters'];
   $quantity = $variables['quantity'];
 
+  $quantity = empty($variables['quantity']) ? 0 : $variables['quantity'];
   global $pager_page_array, $pager_total;
 
   // Nothing to do if there is no pager.

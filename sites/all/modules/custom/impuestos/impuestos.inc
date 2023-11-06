@@ -41,7 +41,8 @@
 	  $form['consulta'] = array(
 	      '#title' => t('Datos del abonado'),
 	      '#type' => 'fieldset',
-	      '#description' => t('Consulta a través de su cédula y por RUBRO')
+	      '#description' => t('Consulta a través de su cédula y por RUBRO'),
+              '#suffix' => t('Para consulta de infracciones de tránsito, haga <a href="/infracciones">clic aquí</a></br>')
 	  );
 	  $form['consulta']['cedula'] = array(
 	      '#title' => t('Número de cédula'),
