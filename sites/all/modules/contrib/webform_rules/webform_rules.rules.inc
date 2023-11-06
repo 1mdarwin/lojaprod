@@ -81,6 +81,27 @@ function webform_rules_rules_condition_info() {
       'group' => t('Webform'),
       'base' => 'webform_rules_condition_node_is_webform',
     ),
+    'data_nid' => array(
+      'label' => t('Submission to a particular webform'),
+      'parameter' => array(
+        'webform' => array(
+          'type' => 'webform',
+          'label' => t('Current submission data'),
+          'description' => t('Specifiy the submission to check. Value data.'),
+          'restriction' => 'selector',
+        ),
+        'nid' => array(
+          'type' => 'list<integer>',
+          'label' => t('Webforms'),
+          'description' => t('The webforms to check for.'),
+          'options list' => 'webform_rules_get_webforms_as_options',
+          'restriction' => 'input',
+        ),
+      ),
+      'help' => t('Use this condition to expose webform components for a particular webform.'),
+      'group' => t('Webform'),
+      'base' => 'webform_rules_condition_data_nid',
+    ),
   );
 }
 
@@ -124,7 +145,7 @@ function webform_rules_rules_action_info() {
     ),
     'webform_submissions_load' => array(
       'label' => t('Fetch webform submissions'),
-      'base' => t('webform_rules_submissions_load'),
+      'base' => 'webform_rules_submissions_load',
       'group' => t('Webform'),
       'access callback' => 'rules_node_admin_access',
       'parameter' => array(
@@ -143,7 +164,7 @@ function webform_rules_rules_action_info() {
       'provides' => array(
         'submissions' => array(
           'label' => t('Fetched submissions'),
-          'type' => 'list<list>',
+          'type' => 'list<webform_data>',
         ),
       ),
     ),
@@ -158,15 +179,133 @@ function webform_rules_rules_action_info() {
 /**
  * Implements hook_rules_data_info().
  */
-function webform_rules_data_info() {
+function webform_rules_rules_data_info() {
   return array(
-    'webform_data' => array(
+    'webform' => array(
       'label' => t('webform data'),
       'group' => t('Webform'),
       'token type' => 'webform',
-      'property info' => array(),
+      'wrapper class' => 'WebformRulesSubmissionWrapper',
+      'wrap' => TRUE,
+      'is wrapped' => FALSE,
+      'property info' => array(
+        'sid' => array(
+          'type' => 'integer',
+          'label' => 'Submission ID',
+        ),
+        'submitted' => array(
+          'type' => 'date',
+          'label' => 'Date Submitted',
+          ),
+        'remote_addr' => array(
+          'type' => 'text',
+          'label' => 'IP Address of the submitter',
+          ),
+        'uid' => array(
+          'type' => 'integer',
+          'label' => 'User ID of the submitter',
+          ),
+        'name' => array(
+          'type' => 'text',
+          'label' => 'Username of the submitter',
+          ),
+        'is_draft' => array(
+          'type' => 'boolean',
+          'label' => 'Whether the submission was finalized',
+        ),
+      ),
     ),
   );
+}
+
+/**
+ * Compare the form id of the submitted webform with the selected form.
+ */
+function webform_rules_condition_data_nid($submission, $selection, $settings, $state, $condition, $op) {
+  $first_key = key($submission);
+  if (empty($submission) || !$submission[$first_key]->nid) {
+    drupal_set_message('No submission found!','error');
+    return FALSE;
+  }
+  if (is_array($selection)) {
+    if(!empty($selection['webform-client-form-' . $submission[$first_key]->nid])){
+      return TRUE;
+    }else{
+      drupal_set_message('Submission is not in webform!','error');
+      return FALSE;
+    }
+  }
+  elseif (is_string($selected_webform)) {
+    if('webform-client-form-' . $submission[$first_key]->nid == $selection){
+      return TRUE;
+    }else{
+      drupal_set_message('Submission is not in webform(string)!','error');
+      return FALSE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Use an assertion to expose webform component submission data.
+ * @see rules_condition_entity_has_field_assertions()
+ */
+function webform_rules_condition_data_nid_assertions($element) {
+  // Expose webform components if we're given a particular webform condition.
+  if ($wrapper = $element->applyDataSelector($element->settings['webform:select'])) {
+    $assertion = array('property info' => array());
+    $nids = str_replace('webform-client-form-', '', $element->settings['nid']);
+    foreach ($nids as $nid) {
+      // Get webform components and check whether we have one for this webform.
+      $assertion['property info'] += _webform_rules_component_property_info($nid);
+    }
+    if (!empty($assertion['property info'])) {
+      return array($element->settings['webform:select'] => $assertion);
+    }
+  }
+}
+
+/**
+ * Utility callback to build property info based on a particular webform's
+ * components.
+ */
+function _webform_rules_component_property_info($nid) {
+  $info = array();
+  $webform = node_load($nid);
+  foreach ($webform->webform['components'] as $cid => $component) {
+    // A unique selector, using $nid, is important so that our rule will
+    // fail validation if the selected webform changes.
+    $id = "{$component['form_key']}";
+    // Provide property info, as in hook_rules_data_info().
+    $info[$id] = array(
+      'label' => $component['name'],
+      'description' => t('@component_name from @title(@nid)', array('@component_name' => $component['name'], '@title' => $webform->title, '@nid' => $webform->nid)),
+      // All submission data is stored in arrays, whether its multiple or
+      // not. Hence, to simplify, we expose all data as list.
+      'type' => 'list<text>',
+      'getter callback' => 'webform_rules_submission_data_get',
+      // @TODO: implement setter callback
+    );
+  }
+  return $info;
+}
+
+/**
+ * Getter callback for webform submission data.
+ */
+function webform_rules_submission_data_get($submission, $options, $name, $type, $context) {
+  if (is_array($submission) && array_key_exists($name, $submission)) {
+    // If we're looking for the submission component data value, and it's not a
+    // list, return the first entry of the submission component data value.
+    if ($name == 'data' && strpos($context['type'], 'list') === FALSE) {
+      return current($submission[$name]);
+    }
+    // Otherwise, just return whatever value we're looking for.
+    return $submission[$name];
+  }
+  elseif (is_object($submission) && property_exists($submission, $name)) {
+    return $submission->$name;
+  }
 }
 
 /**
@@ -314,3 +453,74 @@ function _webform_rules_event_variables() {
   );
 }
 
+/**
+ * Provide entity-like access to webform submission data.
+ * @see webform_rules_condition_data_nid_assertions()
+ */
+class WebformRulesSubmissionWrapper extends RulesIdentifiableDataWrapper {
+// @TODO: implement RulesDataWrapperSavableInterface
+
+  public function __construct($type, $data = NULL, $info = array()) {
+    if (!is_null($data)) {
+      // If we have a webform submission, add the form values as properties.
+      // (If we do not have a submission, properties are added by assertion.
+      // @see webform_rules_condition_data_nid_assertions()).
+      $info['property info alter'] = array('WebformRulesSubmissionWrapper', 'webformSubmissionValues');
+    }
+    parent::__construct($type, $data, $info);
+    $this->setData($data);
+  }
+
+  public static function webformSubmissionValues($wrapper, $property_info) {
+    $submission = $wrapper->value();
+    $properties = $property_info['properties'];
+    if (!empty($submission->nid)) {
+      $properties += _webform_rules_component_property_info($submission->nid);
+    }
+    return array('properties' => $properties);
+  }
+
+  protected function setData($data) {
+    parent::setData($data);
+    if (!is_array($data)) {
+      return;
+    }
+    $submission = current($data);
+    if (!isset($submission->sid)) {
+      return;
+    }
+    $s = webform_get_submissions(array('sid' => $submission->sid));
+    if (empty($s) || !is_array($s)) {
+      return;
+    }
+    $s = current($s);
+    $this->id = $s->sid;
+    $this->data = $s;
+    $webform = node_load($this->data->nid);
+    $components = $webform->webform['components'];
+    foreach ($s->data as $cid => $val) {
+      $c_key = $components[$cid]['form_key'];
+      $id = "{$c_key}";
+      $this->data->$id = array_values($val);
+    }
+  }
+
+  protected function extractIdentifier($data) {
+    return $data->sid;
+  }
+
+  public function getIdentifier() {
+    return $this->dataAvailable() && $this->value() ? $this->id : NULL;
+  }
+
+  protected function load($data) {
+    if (is_array($data)) {
+      $sid = $data['sid'];
+    }
+    else {
+      $sid = $data;
+    }
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    return webform_get_submissions(array('sid' => $sid));
+  }
+}

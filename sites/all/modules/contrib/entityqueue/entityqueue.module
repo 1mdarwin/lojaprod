@@ -584,6 +584,32 @@ function entityqueue_subqueue_load_by_target_type($target_type) {
 }
 
 /**
+ * Removes an item from a subqueue.
+ *
+ * @param \EntitySubqueue $subqueue
+ *   An entity subqueue.
+ * @param string|int $reference_id
+ *   An entity ID to remove from the subqueue.
+ */
+function entityqueue_subqueue_remove_item(EntitySubqueue $subqueue, $reference_id) {
+  // Get the corresponding queue for this subqueue.
+  $queue = entityqueue_queue_load($subqueue->queue);
+  $field_name = _entityqueue_get_target_field_name($queue->target_type);
+
+  // Filter the field items and remove the referenced ID.
+  $field_items = field_get_items('entityqueue_subqueue', $subqueue, $field_name);
+  $field_items = array_filter($field_items, function($value) use ($reference_id) {
+    return ($value['target_id'] != $reference_id);
+  });
+
+  // Set the filtered item list on the subqueue.
+  $langcode = field_language('entityqueue_subqueue', $subqueue, $field_name, NULL);
+  $subqueue->{$field_name}[$langcode] = $field_items;
+
+  $subqueue->save();
+}
+
+/**
  * Implements hook_contextual_links_view_alter().
  */
 function entityqueue_contextual_links_view_alter(&$element, $items) {
@@ -980,9 +1006,9 @@ function entityqueue_field_widget_form(&$form, &$form_state, $field, $instance, 
         continue;
       }
 
+      $uri = entity_uri($target_type, $entities[$target_id]);
       if (entity_access('view', $target_type, $entities[$target_id])) {
         $label = entity_label($target_type, $entities[$target_id]);
-        $uri = entity_uri($target_type, $entities[$target_id]);
         $label = l($label, $uri['path']);
       }
       else {
@@ -1000,10 +1026,34 @@ function entityqueue_field_widget_form(&$form, &$form_state, $field, $instance, 
         ),
       );
 
+      $entity_actions = array();
+
+      if (entity_access('edit', $target_type, $entities[$target_id])) {
+        $entity_actions[] = array('title' => t('edit'), 'href' => drupal_get_normal_path($uri['path']) . '/edit', 'query' => drupal_get_destination());
+      }
+      if (entity_access('delete', $target_type, $entities[$target_id])) {
+        $entity_actions[] = array('title' => t('delete'), 'href' => drupal_get_normal_path($uri['path']) . '/delete', 'query' => drupal_get_destination());
+      }
+
       $subform['items'][$weight] = array(
         'label' => array(
           '#type' => 'markup',
           '#markup' => $label,
+        ),
+        'entity_actions' => array(
+          '#type' => 'actions',
+          'separator' => array(
+            '#type' => 'markup',
+            '#markup' => '&mdash;'
+          ),
+          'actions' => array(
+            '#type' => 'markup',
+            '#markup' => theme('links__ctools_dropbutton', array(
+              'title' => t('Actions'),
+              'links' => $entity_actions,
+            )),
+          ),
+          '#access' => count($entity_actions) ? 1 : 0,
         ),
         $value_key => array(
           '#type' => 'value',
@@ -1206,12 +1256,17 @@ function _entityqueue_set_breadcrumb($path = 'admin/structure/entityqueue/list')
     if ($menu_item['type'] == MENU_DEFAULT_LOCAL_TASK) {
       continue;
     }
-    $last_item = end($menu_item['map']);
+    $last_item = isset($menu_item['map']) ? end($menu_item['map']) : NULL;
     if (is_object($last_item) && method_exists($last_item, 'label')) {
       $menu_item['title'] = $last_item->label();
     }
 
-    array_unshift($breadcrumb, l($menu_item['title'], $menu_path));
+    if (isset($last_item)) {
+      array_unshift($breadcrumb, l($menu_item['title'], $menu_path));
+    }
+    else {
+      array_unshift($breadcrumb, $menu_item['title']);
+    }
   } while (array_pop($path) && !empty($path));
   array_unshift($breadcrumb, l(t('Home'), NULL));
   array_pop($breadcrumb);

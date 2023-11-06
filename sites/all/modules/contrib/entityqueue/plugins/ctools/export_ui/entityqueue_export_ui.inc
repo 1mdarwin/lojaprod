@@ -4,99 +4,107 @@
  * @file
  * Plugin definition for CTools Export UI integration.
  */
-$plugin = array(
-  'schema' => 'entityqueue_queue',
-  'access' => 'manipulate entityqueues',
-  'create access' => 'administer entityqueue',
-  'delete access' => 'administer entityqueue',
 
-  // Add our custom operations.
-  'allowed operations' => array(
-    'subqueues' => array('title' => t('View subqueues')),
-    'edit subqueue' => array('title' => t('Edit items')),
-  ),
+/**
+ * Implements HOOK_PLUGIN_ctools_export_ui().
+ */
+function entityqueue_entityqueue_export_ui_ctools_export_ui() {
+  return array(
+    'schema' => 'entityqueue_queue',
+    'access' => 'manipulate entityqueues',
+    'create access' => 'administer entityqueue',
+    'delete access' => 'administer entityqueue',
 
-  'menu' => array(
-    'menu item' => 'entityqueue',
-    'menu title' => 'Entity queues',
-    'menu description' => 'Manage orderable queues of content.',
-    // Add entityqueue specific menu callbacks.
-    'items' => array(
-      'subqueues' => array(
-        'path' => 'list/%ctools_export_ui/subqueues',
-        'title' => 'Subqueues',
-        'page callback' => 'ctools_export_ui_switcher_page',
-        'page arguments' => array('entityqueue_export_ui', 'subqueues', 4),
-        'load arguments' => array('entityqueue_export_ui'),
-        'access callback' => 'entityqueue_queue_access',
-        'access arguments' => array('view', 4),
-        'type' => MENU_CALLBACK,
-      ),
-      'add subqueue' => array(
-        'path' => 'list/%ctools_export_ui/subqueues/add',
-        'title' => 'Add subqueue',
-        'page callback' => 'ctools_export_ui_switcher_page',
-        'page arguments' => array('entityqueue_export_ui', 'subqueue_add', 4),
-        'load arguments' => array('entityqueue_export_ui'),
-        'access callback' => 'entityqueue_queue_access',
-        'access arguments' => array('create', 4),
-        'type' => MENU_LOCAL_ACTION,
-      ),
-      'edit subqueue callback' => array(
-        'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue',
-        'page callback' => 'ctools_export_ui_switcher_page',
-        'page arguments' => array('entityqueue_export_ui', 'subqueue_edit', 4, 6),
-        'load arguments' => array('entityqueue_export_ui'),
-        'access callback' => 'entityqueue_queue_access',
-        'access arguments' => array('update', 4),
-        'type' => MENU_CALLBACK,
-      ),
-      'edit subqueue' => array(
-        'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue/edit',
-        'title' => 'Edit subqueue',
-        'page callback' => 'ctools_export_ui_switcher_page',
-        'page arguments' => array('entityqueue_export_ui', 'subqueue_edit', 4, 6),
-        'load arguments' => array('entityqueue_export_ui'),
-        'access callback' => 'entityqueue_queue_access',
-        'access arguments' => array('update', 4),
-        'type' => MENU_DEFAULT_LOCAL_TASK,
-        'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-      ),
-      'delete subqueue' => array(
-        'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue/delete',
-        'title' => 'Delete subqueue',
-        'type' => MENU_CALLBACK,
-        'page callback' => 'ctools_export_ui_switcher_page',
-        'page arguments' => array('entityqueue_export_ui', 'subqueue_delete', 4, 6),
-        'load arguments' => array('entityqueue_export_ui'),
-        'access callback' => 'entityqueue_access',
-        'access arguments' => array('delete', 6, NULL, 'entityqueue_subqueue'),
+    // Add our custom operations.
+    'allowed operations' => array(
+      'subqueues' => array('title' => t('View subqueues')),
+      'edit subqueue' => array('title' => t('Edit items')),
+    ),
+
+    'menu' => array(
+      'menu item' => 'entityqueue',
+      'menu title' => 'Entity queues',
+      'menu description' => 'Manage orderable queues of content.',
+      // Add entityqueue specific menu callbacks.
+      'items' => array(
+        'subqueues' => array(
+          'path' => 'list/%ctools_export_ui/subqueues',
+          'title' => 'Subqueues',
+          'page callback' => 'ctools_export_ui_switcher_page',
+          'page arguments' => array('entityqueue_export_ui', 'subqueues', 4),
+          'load arguments' => array('entityqueue_export_ui'),
+          'access callback' => 'entityqueue_queue_access',
+          'access arguments' => array('view', 4),
+          'type' => MENU_CALLBACK,
+        ),
+        'add subqueue' => array(
+          'path' => 'list/%ctools_export_ui/subqueues/add',
+          'title' => 'Add subqueue',
+          'page callback' => 'ctools_export_ui_switcher_page',
+          'page arguments' => array('entityqueue_export_ui', 'subqueue_add', 4),
+          'load arguments' => array('entityqueue_export_ui'),
+          'access callback' => 'entityqueue_queue_access',
+          'access arguments' => array('create', 4),
+          'type' => MENU_LOCAL_ACTION,
+        ),
+        'edit subqueue callback' => array(
+          'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue',
+          'page callback' => 'ctools_export_ui_switcher_page',
+          'page arguments' => array('entityqueue_export_ui', 'subqueue_edit', 4, 6),
+          'load arguments' => array('entityqueue_export_ui'),
+          'access callback' => 'entityqueue_queue_access',
+          'access arguments' => array('update', 4),
+          'type' => MENU_CALLBACK,
+        ),
+        'edit subqueue' => array(
+          'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue/edit',
+          'title' => 'Edit subqueue',
+          'page callback' => 'ctools_export_ui_switcher_page',
+          'page arguments' => array('entityqueue_export_ui', 'subqueue_edit', 4, 6),
+          'load arguments' => array('entityqueue_export_ui'),
+          'access callback' => 'entityqueue_queue_access',
+          'access arguments' => array('update', 4),
+          'type' => MENU_DEFAULT_LOCAL_TASK,
+          'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+        ),
+        'delete subqueue' => array(
+          'path' => 'list/%ctools_export_ui/subqueues/%entityqueue_subqueue/delete',
+          'title' => 'Delete subqueue',
+          'type' => MENU_CALLBACK,
+          'page callback' => 'ctools_export_ui_switcher_page',
+          'page arguments' => array('entityqueue_export_ui', 'subqueue_delete', 4, 6),
+          'load arguments' => array('entityqueue_export_ui'),
+          'access callback' => 'entityqueue_access',
+          'access arguments' => array('delete', 6, NULL, 'entityqueue_subqueue'),
+        ),
       ),
     ),
-  ),
 
-  // Add our custom page titles.
-  'strings' => array(
-    'title' => array(
-      'subqueues' => t('Subqueues of %title'),
+    // Add our custom page titles.
+    'strings' => array(
+      'title' => array(
+        'subqueues' => t('Subqueues of %title'),
+      ),
     ),
-  ),
 
-  'title singular' => t('queue'),
-  'title singular proper' => t('Queue'),
-  'title plural' => t('queues'),
-  'title plural proper' => t('Queues'),
+    'title singular' => t('queue'),
+    'title singular proper' => t('Queue'),
+    'title plural' => t('queues'),
+    'title plural proper' => t('Queues'),
 
-  'form' => array(
-    'settings' => 'entityqueue_export_ui_form',
-    'validate' => 'entityqueue_export_ui_form_validate',
-  ),
+    'form' => array(
+      'settings' => 'entityqueue_export_ui_form',
+      'validate' => 'entityqueue_export_ui_form_validate',
+    ),
 
-  'handler' => array(
-     'class' => 'entityqueue_export_ui',
-     'parent' => 'ctools_export_ui',
-   ),
-);
+    'handler' => array(
+       'class' => 'entityqueue_export_ui',
+       'parent' => 'ctools_export_ui',
+    ),
+  );
+}
+
+$plugin = entityqueue_entityqueue_export_ui_ctools_export_ui();
 
 /**
  * Form to edit the settings of a queue.

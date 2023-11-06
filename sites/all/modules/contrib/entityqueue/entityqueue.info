@@ -26,9 +26,8 @@ files[] = includes/views/entityqueue_handler_sort_position.inc
 files[] = includes/views/entityqueue_handler_argument_subqueue_id.inc
 files[] = includes/views/entityqueue_handler_filter_in_queue.inc
 
-; Information added by Drupal.org packaging script on 2018-03-09
-version = "7.x-1.5"
+; Information added by Drupal.org packaging script on 2023-10-05
+version = "7.x-1.6"
 core = "7.x"
 project = "entityqueue"
-datestamp = "1520587695"
-
+datestamp = "1696501273"
