@@ -1,4 +1,4 @@
-name=regenerar
+name=regenerar old version of cem module
 description=Consulta de valores Regenerar
 core=7.x
 package=GADML

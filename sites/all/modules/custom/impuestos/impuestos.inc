@@ -408,6 +408,7 @@
 	  }//end if sizeof
 	  $data = keyfrom1($options, FALSE); // Change keys from number 1   
 	  $emision = emisionFuturaView($ced);
+ 	  $emision = ''; # comment this line for enabled the future emision
 
 	  $default_value[0]  = true;
 	  $form['taxes'] = array(

@@ -1,0 +1,14 @@
+name = CEM
+description = Contribucion especial de mejoras - query from table
+package = GADMLoja
+core = 7.x
+;files[] = wsclient_examples.test
+
+configure = admin/admin/cem
+
+; Information added by drupal.org packaging script on 2019-08-08
+version = "7.x-1.0"
+core = "7.x"
+project = "gad"
+datestamp = "1701266027"
+
