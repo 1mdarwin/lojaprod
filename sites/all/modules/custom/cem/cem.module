@@ -29,7 +29,7 @@ function cem_help($path, $arg){
 function cem_menu(){
         // Para mantenimiento se cambia el texto a consultando, caso contrario consulta 
   $items['cem/consulta'] = array(
-    'title' => t('Consulta de cem'),
+    'title' => t('Consulta de cem (Regeneración Urbana global, PTAR)'),
     'description' => t('Consultar sus cem con su número de cédula'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('consulta_cem_form'),

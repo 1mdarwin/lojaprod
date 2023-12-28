@@ -1,4 +1,4 @@
-	<?php
+<?php
 	// 1100048451 varios medidores
 	//
 
@@ -408,7 +408,7 @@
 	  }//end if sizeof
 	  $data = keyfrom1($options, FALSE); // Change keys from number 1   
 	  $emision = emisionFuturaView($ced);
- 	  $emision = ''; # comment this line for enabled the future emision
+ 	  # $emision = ''; # comment this line for enabled the future emision
 
 	  $default_value[0]  = true;
 	  $form['taxes'] = array(
@@ -635,7 +635,7 @@ function _ws_emisionFutura($cedula){
     );
     // Call operation findStatement with parameters    
     $result = $serv->findFutureEmission($findStatement);    
-    dsm($result);
+    # dsm($result);
     return $result;
 
   }catch(WSClientException $f){    
@@ -799,7 +799,7 @@ function registrarPagoatGIM($id_txn){
 
   // Call selected web service with name at next function
   $serv = wsclient_service_load('impuesto');        
-  dsm("Antes de registrar en el GIM: ".$id_txn);
+  # dsm("Antes de registrar en el GIM: ".$id_txn);
   
   try{    
     $serviceRequest = array(        
@@ -839,7 +839,7 @@ function registrarPagoatGIM($id_txn){
   }catch(WSClientException $f){
     //echo $f;    
     drupal_mail('impuestos','failed','dbetancourt@loja.gob.ec', language_default(),$params);
-    dsm($f);
+    # dsm($f);
   }
   
   return $result;
@@ -867,7 +867,7 @@ function registerPaymentAtGIM($requestId){
 
   // Call selected web service with name at next function
   $serv = wsclient_service_load('impuesto');        
-  dsm("Antes de registrar en el GIM: ".$requestId);
+  # dsm("Antes de registrar en el GIM: ".$requestId);
   
   try{    
     $serviceRequest = array(        
@@ -899,7 +899,7 @@ function registerPaymentAtGIM($requestId){
   }catch(WSClientException $f){
     //echo $f;    
     drupal_mail('impuestos','failed','dbetancourt@loja.gob.ec', language_default(),$params);
-    dsm($f);
+    # dsm($f);
   }
   
   return $result;

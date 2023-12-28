@@ -126,7 +126,7 @@ function show_table_codes(){
   global $base_url;
   //dsm($_SESSION['codes']);
   // $_SESSION['codes'] = (isset($_SESSION['codes']) ? $_SESSION['codes']) : );
-  if(sizeof( $_SESSION['codes']) < 1 ){
+  if(sizeof((array)$_SESSION['codes']) < 1 ){
     drupal_set_message('La cédula ingresada no dispone propiedades','warning');
     return drupal_goto($base_url.'/ktastro/consulta');
   }

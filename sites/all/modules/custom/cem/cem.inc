@@ -99,12 +99,13 @@
 		$table .= "<strong>Nombre:</strong> " . $txns[0]->owners ."</br>";
 		$table .= '<table border=1><thead>'.
 		'<tr><th>Num</th>'.
-		'<th>Clave catastral Anterior</th>'.
 		'<th>Clave catastral Nueva</th>'.	
-		'<th>Avaluo</th>'.
-		'<th>Reneracion Urbana</th>'.
+		'<th>Clave catastral Anterior</th>'.
+		'<th>Avalúo</th>'.
+		'<th>Regeneracion Urbana (global)</th>'.
 		'<th>PTAR</th>'.
 		'<th>Total</th>'.	
+		'<th>Valor cuota (1/32)<br/> (Valor estimado)</th>'.
 		'</tr></thead><tbody>';
 		$totales = 0;
 		for($i=0; $i<$len; $i++){		
@@ -116,9 +117,11 @@
 			$table .= '<td style="text-align:right">'. $txns[$i]->r_urb .'</td>';
 			$table .= '<td style="text-align:right">'. $txns[$i]->ptar .'</td>';
 			$table .= '<td style="text-align:right">'. $txns[$i]->total .'</td>';
+			$table .= '<td style="text-align:right">'. number_format(($txns[$i]->total/32), 2, '.', ',') .'</td>';
 			$totales += $txns[$i]->total;	
 		}
-		$table .= '<tr><td colspan=6></td><td style="text-align:right"><strong>'. $totales .'</strong></td></tr>';
+		$totales = number_format($totales, 2, '.', ',');
+		$table .= '<tr><td colspan=6></td><td class="total_cem">'. $totales .'</td></tr>';
 		$table .= '</tbody></table>';
 
 		$table .= '<strong>(PTAR):</strong> Planta de tratamiento de aguas residuales';

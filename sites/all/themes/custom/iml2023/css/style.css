@@ -342,6 +342,11 @@ li.media{
   font-size:1.3em;
   border:thin dashed #dbdbdb;
 }
+.total_cem{
+  background: #85bb24;
+  font-weight:700;
+  text-align:right;
+}
 .nuevacon{
   padding:10px 0;
 }
