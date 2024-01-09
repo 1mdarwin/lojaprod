@@ -140,7 +140,7 @@ class CommerceOrderEntityController extends DrupalCommerceEntityController imple
    */
   public function attachLoad(&$queried_orders, $revision_id = FALSE) {
     foreach ($queried_orders as $order_id => &$order) {
-      $order->data = unserialize($order->data);
+      $order->data = unserialize((string) $order->data);
     }
 
     // Call the default attachLoad() method. This will add fields and call

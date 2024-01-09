@@ -127,7 +127,7 @@ class CommerceProductEntityController extends DrupalCommerceEntityController imp
    */
   public function attachLoad(&$queried_products, $revision_id = FALSE) {
     foreach ($queried_products as $product_id => &$product) {
-      $product->data = unserialize($product->data);
+      $product->data = unserialize((string) $product->data);
     }
 
     // Call the default attachLoad() method. This will add fields and call

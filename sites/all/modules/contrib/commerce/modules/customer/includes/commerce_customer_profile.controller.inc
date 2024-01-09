@@ -118,7 +118,7 @@ class CommerceCustomerProfileEntityController extends DrupalCommerceEntityContro
    */
   public function attachLoad(&$queried_profiles, $revision_id = FALSE) {
     foreach ($queried_profiles as $profile_id => &$profile) {
-      $profile->data = unserialize($profile->data);
+      $profile->data = unserialize((string) $profile->data);
     }
 
     // Call the default attachLoad() method. This will add fields and call

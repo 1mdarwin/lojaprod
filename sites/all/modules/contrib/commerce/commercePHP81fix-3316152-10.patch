@@ -1,0 +1,69 @@
+diff --git a/modules/customer/includes/commerce_customer_profile.controller.inc b/modules/customer/includes/commerce_customer_profile.controller.inc
+index 4eaf9e927..4205fe2a6 100644
+--- a/modules/customer/includes/commerce_customer_profile.controller.inc
++++ b/modules/customer/includes/commerce_customer_profile.controller.inc
+@@ -118,7 +118,7 @@ class CommerceCustomerProfileEntityController extends DrupalCommerceEntityContro
+    */
+   public function attachLoad(&$queried_profiles, $revision_id = FALSE) {
+     foreach ($queried_profiles as $profile_id => &$profile) {
+-      $profile->data = unserialize($profile->data);
++      $profile->data = unserialize((string) $profile->data);
+     }
+ 
+     // Call the default attachLoad() method. This will add fields and call
+diff --git a/modules/line_item/includes/commerce_line_item.controller.inc b/modules/line_item/includes/commerce_line_item.controller.inc
+index 84f0e81cb..4c9c10cea 100644
+--- a/modules/line_item/includes/commerce_line_item.controller.inc
++++ b/modules/line_item/includes/commerce_line_item.controller.inc
+@@ -106,7 +106,7 @@ class CommerceLineItemEntityController extends DrupalCommerceEntityController {
+    */
+   public function attachLoad(&$queried_line_items, $revision_id = FALSE) {
+     foreach ($queried_line_items as $line_item_id => &$line_item) {
+-      $line_item->data = unserialize($line_item->data);
++      $line_item->data = unserialize((string) $line_item->data);
+     }
+ 
+     // Call the default attachLoad() method. This will add fields and call
+diff --git a/modules/order/includes/commerce_order.controller.inc b/modules/order/includes/commerce_order.controller.inc
+index b8f0f5ef3..6cf7ae96e 100644
+--- a/modules/order/includes/commerce_order.controller.inc
++++ b/modules/order/includes/commerce_order.controller.inc
+@@ -140,7 +140,7 @@ class CommerceOrderEntityController extends DrupalCommerceEntityController imple
+    */
+   public function attachLoad(&$queried_orders, $revision_id = FALSE) {
+     foreach ($queried_orders as $order_id => &$order) {
+-      $order->data = unserialize($order->data);
++      $order->data = unserialize((string) $order->data);
+     }
+ 
+     // Call the default attachLoad() method. This will add fields and call
+diff --git a/modules/payment/includes/commerce_payment_transaction.controller.inc b/modules/payment/includes/commerce_payment_transaction.controller.inc
+index a646770ba..020f56e73 100644
+--- a/modules/payment/includes/commerce_payment_transaction.controller.inc
++++ b/modules/payment/includes/commerce_payment_transaction.controller.inc
+@@ -132,9 +132,9 @@ class CommercePaymentTransactionEntityController extends DrupalCommerceEntityCon
+    */
+   public function attachLoad(&$queried_transactions, $revision_id = FALSE) {
+     foreach ($queried_transactions as $transaction_id => &$transaction) {
+-      $transaction->message_variables = unserialize($transaction->message_variables);
+-      $transaction->payload = unserialize($transaction->payload);
+-      $transaction->data = unserialize($transaction->data);
++      $transaction->message_variables = unserialize((string) $transaction->message_variables);
++      $transaction->payload = unserialize((string) $transaction->payload);
++      $transaction->data = unserialize((string) $transaction->data);
+     }
+ 
+     // Call the default attachLoad() method. This will add fields and call
+diff --git a/modules/product/includes/commerce_product.controller.inc b/modules/product/includes/commerce_product.controller.inc
+index dedd63a95..035b05f8c 100644
+--- a/modules/product/includes/commerce_product.controller.inc
++++ b/modules/product/includes/commerce_product.controller.inc
+@@ -127,7 +127,7 @@ class CommerceProductEntityController extends DrupalCommerceEntityController imp
+    */
+   public function attachLoad(&$queried_products, $revision_id = FALSE) {
+     foreach ($queried_products as $product_id => &$product) {
+-      $product->data = unserialize($product->data);
++      $product->data = unserialize((string) $product->data);
+     }
+ 
+     // Call the default attachLoad() method. This will add fields and call
