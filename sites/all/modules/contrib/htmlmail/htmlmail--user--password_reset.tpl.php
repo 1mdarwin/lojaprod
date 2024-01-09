@@ -42,7 +42,7 @@
  *  - $theme_url: The absolute url to the Email theme directory.
  */
   $template_name = basename(__FILE__);
-  $current_path = realpath(NULL);
+  $current_path = __DIR__;
   $current_len = strlen($current_path);
   $template_path = realpath(dirname(__FILE__));
   if (!strncmp($template_path, $current_path, $current_len)) {

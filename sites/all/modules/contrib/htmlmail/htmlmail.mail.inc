@@ -281,7 +281,7 @@ class HTMLMailSystem implements MailSystemInterface {
     }
     if (isset($message['headers']['Return-Path'])) {
       // A return-path was set.
-      if (isset($_SERVER['WINDIR']) || strpos($_SERVER['SERVER_SOFTWARE'], 'Win32') !== FALSE) {
+      if (isset($_SERVER['WINDIR']) || strpos((string) $_SERVER['SERVER_SOFTWARE'], 'Win32') !== FALSE) {
         // On Windows, PHP will use the value of sendmail_from for the
         // Return-Path header.
         $old_from = ini_get('sendmail_from');
