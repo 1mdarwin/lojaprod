@@ -1,5 +1,6 @@
 {
     "require": {
-        "dnetix/redirection": "^0.4.5"
+        "dnetix/redirection": "^0.4.5",
+        "mpdf/mpdf": "^8.2"
     }
 }

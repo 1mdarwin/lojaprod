@@ -1059,7 +1059,8 @@ function place2pay_cierrecaja(){
 * @param html - render get from another function
 */
 function write_pdfp2p($html){
-  module_load_include('php','place2pay','mpdf/mpdf');
+  //module_load_include('php','place2pay','mpdf/mpdf');
+  module_load_include('php','place2pay','vendor/autoload');
   //module_load_include('php','payclub','lib/fpdf');  
   $mode=''; // (Blanco para establecer el valor por defecto)<br>
   /* Se especifica un tamaño de página predefinido o como un arreglo<br>
@@ -1077,7 +1078,14 @@ function write_pdfp2p($html){
   $marg_h=5;  // Margen de la cabecera de la página<br>
   $marg_f=5;  // Margen del pie de página<br>
   //$mpdf = new mPDF();
-  $mpdf=new mPDF($mode,'',$font_s,$font_f,$marg_l,$marg_r,$marg_t,$marg_b,$marg_h,$marg_f);
+//  $mpdf=new mPDF($mode,'',$font_s,$font_f,$marg_l,$marg_r,$marg_t,$marg_b,$marg_h,$marg_f);
+  $mpdf = new \Mpdf\Mpdf(['tempDir' => '/tmp',
+			  'margin_top'=> 28, 
+			  'margin_left'=> 5, 
+			  'margin_header'=> 5, 
+			  'margin_footer'=> 5, 
+			  'margin_right' => 5
+  ]);
   $mpdf->showImageErrors = true;
   $headerLogo = '<img src="sites/all/modules/custom/place2pay/images/logo.png" width="80" height="80">';  
   $mpdf->setHTMLHeader($headerLogo);
