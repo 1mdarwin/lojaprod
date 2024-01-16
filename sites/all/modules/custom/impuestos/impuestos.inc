@@ -82,13 +82,13 @@
 	 * Function for validate consulta_form 
 	 */
 	function consulta_form_validate(&$form, &$form_state){
-	  $cedula = $form_state['values']['cedula'];
+	  /*$cedula = $form_state['values']['cedula'];
 	  if(strlen($cedula) < 9 ||(strlen($cedula) > 13) || !is_numeric($cedula)){
 	    form_set_error('cedula', t('Debe digitar un número de cédula válido'));
 	  }
 	  if(empty($cedula)|| !is_numeric($cedula)){// || strlen($_POST['g-recaptcha-response'])==0){
 	    form_set_error('cedula', t('Debe digitar un número de cédula válido'));
-	  }
+	  }*/
 	}
 	/*
 	 * Function for submit consulta_form
@@ -154,7 +154,7 @@
 		 //dsm('captcha vacio');
 	  } 
  	  // if(!user_is_logged_in()){
-	  if(empty($ced)|| !is_numeric($ced) || strlen($_POST['g-recaptcha-response'])==0){
+	  if(empty($ced) || strlen($_POST['g-recaptcha-response'])==0){
 	    unset($_SESSION['rubro']);
 	    return drupal_goto($base_url.'/consulta');
 	  }
@@ -693,7 +693,7 @@ function emisionFuturaView($ced){
  */
 function _ws_impuesto($cedula){
   global $user;
-  if(empty($cedula)|| !is_numeric($cedula)){
+  if(empty($cedula)){
     return drupal_goto('https://www.loja.gob.ec/consulta');
   }
 
