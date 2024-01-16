@@ -97,12 +97,12 @@
  *
  * References
  *
- * 1. http://drupal.org/project/htmlmail
- * 2. http://drupal.org/project/htmlmail
- * 3. http://api.drupal.org/api/drupal/includes--mail.inc/function/drupal_mail/7
- * 4. http://api.drupal.org/api/drupal/includes--mail.inc/function/drupal_mail/7
- * 5. http://drupal.org/project/echo
- * 6. http://api.drupal.org/api/drupal/modules--system--theme.api.php/function/hook_preprocess_HOOK/7
+ * 1. https://www.drupal.org/project/htmlmail
+ * 2. https://www.drupal.org/project/htmlmail
+ * 3. https://api.drupal.org/api/drupal/includes%21mail.inc/function/drupal_mail/7.x
+ * 4. https://api.drupal.org/api/drupal/includes%21mail.inc/function/drupal_mail/7.x
+ * 5. https://www.drupal.org/project/echo
+ * 6. https://api.drupal.org/api/drupal/modules%21system%21theme.api.php/function/hook_preprocess_HOOK/7.x
  *
  * =========================================================== End instructions.
  */
@@ -167,7 +167,7 @@ endif; ?><p>
   </p></li><li><p>
     If you think your customizations would be of use to others,
     please contribute your file as a feature request in the
-    <a href="http://drupal.org/node/add/project-issue/htmlmail">issue queue</a>.
+    <a href="https://www.drupal.org/node/add/project-issue/htmlmail">issue queue</a>.
   </p></li></ol></dd><?php if (!empty($params)): ?><dt><p>
     The <?php echo $module; ?> module sets the <u><code>$params</code></u>
     variable.  For this message,
