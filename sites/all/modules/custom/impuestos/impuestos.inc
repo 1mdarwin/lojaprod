@@ -136,6 +136,17 @@
 			//'#required' => TRUE,
 			'#default_value' => variable_get('message', "welcome"),
 		);
+	        $form['notifypayment'] = array(
+			'#title' => t('Emails for notification'),
+			'#type' => 'fieldset',
+			'#description' => t('Email address for notification')
+		);		
+		$form['notifypayment']['n_email'] = array(
+			'#type' => 'textarea',
+			'#title' => t('Add email address separated by semicolons'),			
+			//'#required' => TRUE,
+			'#default_value' => variable_get('n_email', "dabetancourt@loja.gob.ec"),
+		);
 		// system_settings_form allow to save data into table variables from drupal core
 		return system_settings_form($form);
 		
@@ -771,10 +782,6 @@ function registrarPagoatGIM($id_txn){
   global $user;
   ini_set('soap.wsdl_cache_enabled',0);
   $result = array();
-  // $params['usuario']=$user->name;
-  // $params['id_txn']=$id_txn;
-  // $params['usuario']=$username;
-  // $params = $user->name;
   $transaction = db_query('SELECT * FROM place2pay
                             WHERE txn_id = :id_txn',
                             array(':id_txn' => $id_txn))->fetchall();
@@ -784,7 +791,7 @@ function registrarPagoatGIM($id_txn){
   $params['orden']=$transaction[0]->orden_id;
   $params['cedula']=$transaction[0]->cedula;
   $params['subtotal']=$transaction[0]->subtotal;
-  $params['txn_id']=$transaction[0]->txn_id;
+  $params['transaccion']=$transaction[0]->txn_id;
   
   
   // Amount recover from order created and convert to decimal
@@ -802,6 +809,7 @@ function registrarPagoatGIM($id_txn){
   // Call selected web service with name at next function
   $serv = wsclient_service_load('impuesto');        
   # dsm("Antes de registrar en el GIM: ".$id_txn);
+  $n_emails = variable_get('n_email',0); // Get email address from settings form
   
   try{    
     $serviceRequest = array(        
@@ -840,7 +848,7 @@ function registrarPagoatGIM($id_txn){
                       array(':id_txn' => $id_txn));*/
   }catch(WSClientException $f){
     //echo $f;    
-    drupal_mail('impuestos','failed','dbetancourt@loja.gob.ec', language_default(),$params);
+    drupal_mail('impuestos','failed',$n_emails, language_default(),$params);
     # dsm($f);
   }
   
@@ -1049,7 +1057,11 @@ function test_page(){
   $params['orden']= '90345';
   $params['cedula']= '1103470892';
   $params['subtotal']= 23.55;
-  drupal_mail('impuestos','failed','mcartuche@loja.gob.ec;dbetancourt@loja.gob.ec', language_default(),$params);
+  $params['transaccion']= 12355;
+  $n_emails = variable_get('n_email',0);
+  drupal_set_message("Emails obtenidos: ". $n_emails);
+  drupal_mail('impuestos','failed', $n_emails, language_default(), $params);
+  //drupal_mail('impuestos','failed','dbetancourt@loja.gob.ec', language_default(),$params);
   $result = array();
 //  $result =  consultaflat($ced);
 //  $result = _ws_impuesto($ced);

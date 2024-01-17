@@ -177,7 +177,7 @@ function impuestos_mail($key, &$message, $params){
         $message['body'][] = t('<br/><strong>Orden:</strong> '. $params['orden']);
         $message['body'][] = t('<br/><strong>Cedula:</strong> '. $params['cedula']);
         $message['body'][] = t('<br/><strong>Subtotal:</strong> '. $params['subtotal']);
-        $message['body'][] = t('<br/><strong>Transaccion ID:</strong> '. $params['txn_id']);
+        $message['body'][] = t('<br/><strong>Transaccion ID:</strong> '. $params['transaccion']);
       }
       $message['body'][] = t('<br/><br/>Por favor actualizarlo manualmente antes del cierre de jornada.');
       $message['body'][] = t('<br/>Municipio de Loja.');
