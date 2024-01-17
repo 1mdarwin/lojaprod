@@ -774,15 +774,17 @@ function registrarPagoatGIM($id_txn){
   // $params['usuario']=$user->name;
   // $params['id_txn']=$id_txn;
   // $params['usuario']=$username;
-  $params = $user->name;
+  // $params = $user->name;
   $transaction = db_query('SELECT * FROM place2pay
                             WHERE txn_id = :id_txn',
                             array(':id_txn' => $id_txn))->fetchall();
   $bondsid = array(); // Initialize array
   $bondsid = explode(',',$transaction[0]->bondsid); //$_SESSION['bondsid'];  // Recover variable from session browser
   $ced = $transaction[0]->cedula;
-  // $params['orden']=$transaction[0]->orden_id;
-  // $params['cedula']=$transaction[0]->cedula;
+  $params['orden']=$transaction[0]->orden_id;
+  $params['cedula']=$transaction[0]->cedula;
+  $params['subtotal']=$transaction[0]->subtotal;
+  $params['txn_id']=$transaction[0]->txn_id;
   
   
   // Amount recover from order created and convert to decimal
@@ -1044,9 +1046,13 @@ function consultaflat($ced){
 }
 function test_page(){
   $ced = '1103756845';
+  $params['orden']= '90345';
+  $params['cedula']= '1103470892';
+  $params['subtotal']= 23.55;
+  drupal_mail('impuestos','failed','mcartuche@loja.gob.ec;dbetancourt@loja.gob.ec', language_default(),$params);
   $result = array();
 //  $result =  consultaflat($ced);
-  $result = _ws_impuesto($ced);
+//  $result = _ws_impuesto($ced);
   //dsm($result);
-  return 'Test with out module';
+  return 'Test with out module and tried to send mail';
 }

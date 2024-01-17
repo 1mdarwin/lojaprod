@@ -170,9 +170,17 @@ function impuestos_mail($key, &$message, $params){
       watchdog('GIM','Mail status reversed sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
       $message['subject'] = t('Pago FALLO en GIM :: NO ACTUALIZADO');
       $message['body'][] = t('Hello @username,', array('@username' => $usuario));
-      $message['body'][] = t('Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
-      $message['body'][] = t('Por favor actualizarlo manualmente antes del cierre de jornada.');
-      $message['body'][] = t('Municipio de Loja.');
+      $message['body'][] = t('<br/>Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
+      $message['body'][] = t('<br/><br/><strong>Detalles de la transacción:</strong>');
+      if(isset($params['orden'])){
+        $message['subject'] = t('Pago FALLO en GIM :: Orden: '. $params['orden']);
+        $message['body'][] = t('<br/><strong>Orden:</strong> '. $params['orden']);
+        $message['body'][] = t('<br/><strong>Cedula:</strong> '. $params['cedula']);
+        $message['body'][] = t('<br/><strong>Subtotal:</strong> '. $params['subtotal']);
+        $message['body'][] = t('<br/><strong>Transaccion ID:</strong> '. $params['txn_id']);
+      }
+      $message['body'][] = t('<br/><br/>Por favor actualizarlo manualmente antes del cierre de jornada.');
+      $message['body'][] = t('<br/>Municipio de Loja.');
       break;
    case 'success':
       //$message['to'] = $user->mail;
