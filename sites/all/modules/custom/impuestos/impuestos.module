@@ -172,7 +172,7 @@ function impuestos_mail($key, &$message, $params){
       $message['body'][] = t('Hello @username,', array('@username' => $usuario));
       $message['body'][] = t('<br/>Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
       $message['body'][] = t('<br/><br/><strong>Detalles de la transacción:</strong>');
-      if(isset($params['orden'])){
+      if(isset($params['cedula'])){
         $message['subject'] = t('Pago FALLO en GIM :: Orden: '. $params['orden']);
         $message['body'][] = t('<br/><strong>Orden:</strong> '. $params['orden']);
         $message['body'][] = t('<br/><strong>Cedula:</strong> '. $params['cedula']);
