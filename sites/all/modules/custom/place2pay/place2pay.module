@@ -68,9 +68,19 @@ function place2pay_menu(){
   $items['place2pay/requestInformation/%'] = array(
     	'page callback' => 'place2pay_getRequestInformation',
     	'access callback'  => TRUE,
+        'access arguments'  => array('administer getInf'),
+        'access callback'  => 'user_access',
     	'type' => MENU_CALLBACK,
     	'file' => 'place2pay.inc',
    );  
+   $items['place2pay/reversePayment/%'] = array(
+    'page callback' => 'place2pay_reversePayment',
+    'access callback'  => TRUE,
+    'access arguments'  => array('administer reversePayment'),
+    'access callback'  => 'user_access',
+    'type' => MENU_CALLBACK,
+    'file' => 'place2pay.inc',
+  ); 
   $items['admin/commerce/orders/updgim'] = array(
     'title' => t('GIM - P2P'),
     'description' => t('Update GIM manually with transaction ID - txn_id'),
@@ -171,6 +181,14 @@ function place2pay_permission(){
       'title' => t('Actualización de GIM placetopay'),
       'description' => t('Permitir acceso para actualizar GIM'),
       ), 
+    'administer getInf' => array(
+        'title' => t('Validar pago de la plataform'),
+        'description' => t('Permitir acceso para validar el pago Placetopay'),
+    ),
+    'administer reversePayment' => array(
+        'title' => t('Reversar Pago de la plataforma'),
+        'description' => t('Permitir reversar el pago Placetopay'),
+    ),
     'administer cajap2p' => array(
       'title' => t('Caja Placetopay'),
       'description' => t('Permitir acceso a cierre de caja placetopay'),

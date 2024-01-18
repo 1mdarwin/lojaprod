@@ -168,7 +168,7 @@ function impuestos_mail($key, &$message, $params){
     case 'failed':
       //$message['to'] = $user->mail;
       watchdog('GIM','Mail status reversed sent to :mailto', array(':mailto'=>$usuario), WATCHDOG_DEBUG);
-      $message['subject'] = t('Pago FALLO en GIM :: NO ACTUALIZADO');
+      $message['subject'] = t('Pago FALLO en GIM :: NO ACTUALIZADO '.$params['transaccion']);
       $message['body'][] = t('Hello @username,', array('@username' => $usuario));
       $message['body'][] = t('<br/>Estimado Administrador, NO se ha registrado el pago en el sistema GIM.');
       $message['body'][] = t('<br/><br/><strong>Detalles de la transacción:</strong>');
@@ -190,6 +190,7 @@ function impuestos_mail($key, &$message, $params){
       //$message['body'][] = t('Hello @username,', array('@username' => $usuario));
       $message['body'][] = t('<h2>Hola Administrador</h2>');
       $message['body'][] = t('<p>El pago en el sistema GIM fue exitoso.</p>');
+      $message['body'][] = t('<br/><strong>Orden:</strong> '. $params['orden']);
       $message['body'][] = t('Gracias por utilizar estos servicios.');
       $message['body'][] = t('<p>Municipio de Loja.</p>');
       break;

@@ -528,6 +528,7 @@ function place2pay_getRequestInformation(){
   dsm('Numero de orden: '.$reqInf->payment[0]->reference); // Num Order 
   dsm('Autorizacion: '.$reqInf->payment[0]->authorization); // authorizaton code
   dsm('Monto total: '.$reqInf->payment[0]->processorFields[1]->value); // monto total
+  dsm('Referencia Intera: '.$reqInf->payment[0]->internalReference); // Referencia Interna
   dsm('Monto total: '.$reqInf->payment[0]->amount->from->total); // monto total
   dsm('Monto total: '.$reqInf->request->payment->amount->total); // monto total
    /*if(isset($reqInf->payment[0]->processorFields[0]->value->installments)){
@@ -623,7 +624,86 @@ function _getRequestInformation($requestId){
   $response = json_decode($json_response, false);	
   return $response;
 }
+/**
+* Check the payment, this function allow to verify if the data is correct
+* Can access from URL <path_site>/place2pay/requestinformation
+* This function show a multilevel Array, is better if you have enable the dev module
+*/
+function place2pay_reversePayment(){
+  // $reqId = '21141967';
+  $internalReference = arg(2);
+  if(isset($internalReference)){
+    dsm('requestId: '.$internalReference);
+    $reverseInf = _reversePayment($internalReference);
+    dsm($reverseInf);  
+  }else{
+    drupal_set_message('You should send a GET parameter (internalReference) ');
+  }
+  return "Retrieve information from reversePayment method from Place2Pay using internalReference";
+}
+/*
+* Reverse a Payment
+* @param $internalReference
+* Internal reference value, get from getRequestInformation
+* @return StdClass
+*/
+function _reversePayment($internalReference){
+  watchdog('place2pay', 'Metodo reversePayment con referencia interna :id', array(':id' => $internalReference), WATCHDOG_INFO);
+  module_load_include('php','place2pay','vendor/autoload');
+  $login = LOGIN_P2P;
+  $trankey = '9EPoJ98NIr72BJ9x';
+  $secretKey = TRANKEY_P2P;
+  $url_ep = URL_EP;
+  $seed = date('c');
 
+  if (function_exists('random_bytes')) {
+    $nonce = bin2hex(random_bytes(16));
+  } elseif (function_exists('openssl_random_pseudo_bytes')) {
+    $nonce = bin2hex(openssl_random_pseudo_bytes(16));
+  } else {
+    $nonce = mt_rand();
+  }
+  $nonceBase64 = base64_encode($nonce);
+  $tranKey = base64_encode(sha1($nonce . $seed . $secretKey, true));
+  $curl = curl_init();
+
+   curl_setopt_array($curl, array(
+      CURLOPT_URL => URL_EP . "api/reverse",  //Append the requestId builded from place2pay
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => "POST",
+      CURLOPT_HTTPHEADER => array(
+         "Cache-Control: no-cache",
+         "Content-Type: application/json",
+         "Postman-Token: 96983e26-ba1b-4dfa-bbe9-54f877428d08"
+      ),
+  ));
+
+  $request = [
+    "auth" => [
+       "login" => LOGIN_P2P,
+       "seed" => $seed,
+       "nonce" => $nonceBase64,
+       "tranKey" => $tranKey
+    ],
+    "internalReference" => $internalReference
+  ];	
+  $data = json_encode($request);
+  // dsm($data);
+  curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+  $json_response = curl_exec($curl);
+  $err = curl_error($curl);
+  if( $err != '' ){
+    watchdog('place2pay', 'Place2pay - curl_error is :error', array(':error' => $err), WATCHDOG_DEBUG);
+  }  
+  curl_close($curl);
+
+  $response = json_decode($json_response, false);	
+  return $response;
+}
 /**
 * This function get requestId, processURL and status from REST service P2P
 * Get a valid URL for the payment

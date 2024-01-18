@@ -788,8 +788,9 @@ function registrarPagoatGIM($id_txn){
   $bondsid = array(); // Initialize array
   $bondsid = explode(',',$transaction[0]->bondsid); //$_SESSION['bondsid'];  // Recover variable from session browser
   $ced = $transaction[0]->cedula;
+  $params = array();
   $params['orden']=$transaction[0]->order_id;
-  $params['cedula']=$transaction[0]->cedula;
+  $params['cedula']=$ced;
   $params['subtotal']=$transaction[0]->subtotal;
   $params['transaccion']=$transaction[0]->txn_id;
   
