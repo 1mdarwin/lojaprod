@@ -941,7 +941,7 @@ function create_order_with_impuestos($product_id, $line_item_values = array(), $
 
   }
  
-  ////if (empty($order)) {
+  if (empty($order)) {
     // Create the new order in checkout status with a custom order type of "donate_now_order_type".    
     // $order = commerce_order_new($uid, 'commerce_checkout');
     // The next line is alter with checkout_checkout for allows payment :: DRW
@@ -949,7 +949,7 @@ function create_order_with_impuestos($product_id, $line_item_values = array(), $
  
     // Save the order so its ID is assigned.
     commerce_order_save($order);
-  ////}
+  }
   
  
   // Load whatever product represents the item the customer will be
