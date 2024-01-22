@@ -24,10 +24,10 @@
       });
       //$('#edit-cedula').addClass('solo-numero');
       
-      $('#edit-cedula').keyup(function (){
+      /*$('#edit-cedula').keyup(function (){
             this.value = (this.value + '').replace(/[^0-9+\-Ee.]/g, '');
 
-          });
+          });*/
       $('#edit-nombres').keyup(function (){
             this.value = (this.value + '').replace(/[^A-Z a-z+\-Ee.]/g, '');
           });
