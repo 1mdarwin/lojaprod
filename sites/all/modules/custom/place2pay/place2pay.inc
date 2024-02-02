@@ -386,7 +386,7 @@ function concilliation_gim_p2p(){
   $fEnd   = $fechahoy . " 23:59:59";
   $empty_status = db_query("SELECT requestId FROM place2pay
                           WHERE requestId != ''
-                          AND estado = ''
+                          AND gim = 0
                           AND fecha > :fStart AND fecha < :fEnd 
                           ORDER BY order_id desc",
                           array(':fStart'=> $fStart, ':fEnd' => $fEnd))->fetchall();
