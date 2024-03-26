@@ -5604,11 +5604,11 @@ function drupal_cron_run() {
  */
 function drupal_cron_cleanup() {
   // See if the semaphore is still locked.
-  if (!lock_may_be_available('cron')) {
+  if (variable_get('cron_semaphore', FALSE)) {
     watchdog('cron', 'Cron run exceeded the time limit and was aborted.', array(), WATCHDOG_WARNING);
 
     // Release cron semaphore.
-    lock_release('cron');
+    variable_del('cron_semaphore');
   }
 }
 
