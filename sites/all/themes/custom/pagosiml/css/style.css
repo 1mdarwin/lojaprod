@@ -115,7 +115,7 @@ h3{
 
 ul.navbar-nav{
   margin-top: 10px;
-  background:#084d6e;
+  background:#;#BD1622
 }
 .navbar-nav>li{
   /*border-right: thin solid #39423d;*/
@@ -318,12 +318,12 @@ li.media{
   display:inline;
 }
 .panel-heading{
-  background: #084d6e !important;
+  background: #BD1622 !important;
   color:#FFF !important;
 }
 .btn-default{
   color:#FFF;
-  background-color: #084d6e;
+  background-color: #BD1622;
 }
 .totalremision{
   text-align:right;
@@ -437,7 +437,7 @@ table caption{
 }
 table th{
   /*background: url('../images/bg_th2.jpg') no-repeat scroll right #269abc;*/
-  background: #084d6e; /* For browsers that do not support gradients */  
+  background: #BD1622; /* For browsers that do not support gradients */  
   color: #FFF;
   padding: 0 5px;
   height: 40px;
@@ -1063,7 +1063,7 @@ footer .pane-content {
     padding-bottom:40.25%;
   }
   .mainmenu{
-    background: #084d6e;
+    background: #BD1622;
   }
   .searchbox{
     top: 100px;
