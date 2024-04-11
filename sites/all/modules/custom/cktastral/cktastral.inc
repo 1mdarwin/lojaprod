@@ -46,10 +46,10 @@ function catastro_form($form, &$form_state){
  */
 function catastro_form_validate($form, &$form_state){  
   $cedula = $form_state['values']['cedula'];
-  if(strlen($cedula) < 10 ||(strlen($cedula) > 13) || !is_numeric($cedula)){
+  if(strlen($cedula) < 8 ||(strlen($cedula) > 13) ){
     form_set_error('cedula', t('Debe digitar un número de cédula o ruc válido'));
   }
-  if(empty($cedula)|| !is_numeric($cedula)){// || strlen($_POST['g-recaptcha-response'])==0){
+  if(empty($cedula)){// || strlen($_POST['g-recaptcha-response'])==0){
     form_set_error('cedula', t('Debe digitar un número de cédula o ruc válido'));
   }
 }
