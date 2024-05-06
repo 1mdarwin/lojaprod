@@ -161,6 +161,7 @@ function show_property(){
 * @param html - render get from another function
 */
 function write_pdf_ktastro($html){  
+  ini_set("pcre.backtrack_limit", "5000000");
   // module_load_include('php','place2pay','mpdf/mpdf');
   require_once __DIR__ . '/vendor/autoload.php';
   //module_load_include('php','payclub','lib/fpdf');  

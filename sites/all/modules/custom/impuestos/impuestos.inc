@@ -711,7 +711,7 @@ function _ws_impuesto($cedula){
   $result = array();
   // Call selected web service with name at next function
   ini_set('soap.wsdl_cache_enabled',0);
-  ini_set("default_socket_timeout", 100); // Extend the timeout for clients with large queue taxes
+  ini_set("default_socket_timeout", 150); // Extend the timeout for clients with large queue taxes
   $serv = wsclient_service_load('impuesto');  
   // $params = $user->name;  
   $params = (isset($user->name)? $user->name : 'Contribuyente');  
