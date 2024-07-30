@@ -3,10 +3,9 @@ description = "Popup message for users"
 core = "7.x"
 package = "User interface"
 project = "popup_message"
-
-; Information added by Drupal.org packaging script on 2014-03-20
-version = "7.x-1.2"
+configure = admin/config/user-interface/popup_message
+; Information added by Drupal.org packaging script on 2024-06-26
+version = "7.x-1.3"
 core = "7.x"
 project = "popup_message"
-datestamp = "1395329057"
-
+datestamp = "1719425968"

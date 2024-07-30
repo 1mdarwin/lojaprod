@@ -9,7 +9,7 @@
 /**
  * Default version of core we want to query for.
  */
-define('UPGRADE_STATUS_CORE_VERSION', '9.5.x');
+define('UPGRADE_STATUS_CORE_VERSION', '10.2.x');
 
 /**
  * Project has a new release available, but it is not a security release.
@@ -193,7 +193,7 @@ function upgrade_status_core_version_form($form, &$form_state) {
   $form['upgrade_status_core_version'] = array(
     '#type' => 'select',
     '#title' => t('Check upgrade status to version'),
-    '#options' => drupal_map_assoc(array('8.9.x', '9.5.x', '10.0.x')),
+    '#options' => drupal_map_assoc(array('8.9.x', '9.5.x', '10.2.x')),
     '#default_value' => variable_get('upgrade_status_core_version', UPGRADE_STATUS_CORE_VERSION),
     '#description' => $last ? t('Last checked: @time ago', array('@time' => format_interval(REQUEST_TIME - $last))) : t('Last checked: never'),
   );

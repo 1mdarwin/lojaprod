@@ -31,7 +31,6 @@ function popup_message_settings() {
   $form['popup_message_fieldset']['popup_message_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Message title'),
-    '#required' => TRUE,
     '#default_value' => variable_get('popup_message_title'),
   );
   $popup_message_body = variable_get('popup_message_body');
@@ -39,8 +38,9 @@ function popup_message_settings() {
     '#type' => 'text_format',
     '#base_type' => 'textarea',
     '#title' => t('Message body'),
-    '#default_value' => $popup_message_body['value'],
-    '#format' => isset($popup_message_body['format']) ? $popup_message_body['format'] : NULL,
+    '#default_value' => $popup_message_body['value'] ?? NULL,
+    '#format' => $popup_message_body['format'] ?? NULL,
+    '#required' => TRUE,
   );
   $form['popup_message_fieldset']['popup_message_width'] = array(
     '#type' => 'textfield',

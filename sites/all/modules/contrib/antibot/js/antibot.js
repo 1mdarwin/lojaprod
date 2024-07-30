@@ -48,7 +48,7 @@
         // Check if a key is required.
         if (Drupal.settings.antibot.forms[id].key) {
           // Inject the key value.
-          $('form#' + id).find('input[name="antibot_key"]').val(Drupal.settings.antibot.forms[id].key);
+          $('form#' + id).find('input[name="antibot_key"]').val(Drupal.settings.antibot.forms[id].key.split("").reverse().join("").match(/.{1,2}/g).map((value) => value.split("").reverse().join("")).join(""));
         }
       }
       // Mark this user as being human.

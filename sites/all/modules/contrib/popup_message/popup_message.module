@@ -115,11 +115,16 @@ function popup_message_init() {
   if ($permission && $status && $page_match) {
     $message_title = filter_xss(variable_get('popup_message_title', ''));
     $message_body_variable = variable_get('popup_message_body');
-    $message_body = check_markup(
-          $message_body_variable['value'],
-          ($message_body_variable['format'] ? $message_body_variable['format'] : variable_get('filter_default_format', NULL)),
-          FALSE
-        );
+    if(isset($message_body_variable) && is_array($message_body_variable)) {
+      $message_body = check_markup(
+            $message_body_variable['value'],
+            ($message_body_variable['format'] ? $message_body_variable['format'] : variable_get('filter_default_format', NULL)),
+            FALSE
+          );
+    }
+    else {
+      $message_body = [];
+    }
     $popup_message_parameters = array(
       'title' => $message_title,
       'body' => $message_body,
@@ -130,7 +135,7 @@ function popup_message_init() {
     );
     // Allow other modules to modiffy message parameters.
     drupal_alter('popup_message_perameters', $popup_message_parameters);
-    if ($message_title && $message_body) {
+    if ($message_body) {
       popup_message_show_message($popup_message_parameters);
     }
   }

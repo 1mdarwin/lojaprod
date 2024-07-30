@@ -48,14 +48,14 @@ function popup_message_center_popup(width, height) {
 
   var popupWidth = 0;
   if (typeof width == "undefined") {
-    popupWidth = $("#popup-message-window").width();
+    popupWidth = jQuery("#popup-message-window").width();
   }
   else {
     popupWidth = width;
   }
   var popupHeight = 0;
   if (typeof width == "undefined") {
-    popupHeight = $("#popup-message-window").height();
+    popupHeight = jQuery("#popup-message-window").height();
   }
   else {
     popupHeight = height;
@@ -80,7 +80,8 @@ function popup_message_center_popup(width, height) {
  * Display popup message.
  */
 function popup_message_display_popup(popup_message_title, popup_message_body, width, height) {
-  jQuery('body').append("<div id='popup-message-window'><a id='popup-message-close'>X</a><br /><h1 class='popup-message-title'>" + popup_message_title + "</h1><div id='popup-message-content'>" + popup_message_body + "</div></div><div id='popup-message-background'></div>");
+  var title = popup_message_title != "" ? "<br><h1 class='popup-message-title'>" + popup_message_title + "</h1>": "";
+  jQuery('body').append("<div id='popup-message-window'><a id='popup-message-close'>X</a>" + title + "<div id='popup-message-content'>" + popup_message_body + "</div></div><div id='popup-message-background'></div>");
 
   // Loading popup.
   popup_message_center_popup(width, height);

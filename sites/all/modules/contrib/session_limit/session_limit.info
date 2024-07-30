@@ -8,8 +8,8 @@ files[] = session_limit.module
 files[] = session_limit.tokens.inc
 files[] = tests/session_limit.test
 
-; Information added by Drupal.org packaging script on 2018-10-31
-version = "7.x-2.3"
+; Information added by Drupal.org packaging script on 2024-05-06
+version = "7.x-2.4"
 core = "7.x"
 project = "session_limit"
-datestamp = "1540976892"
+datestamp = "1715005029"
