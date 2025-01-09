@@ -106,7 +106,7 @@ function place2pay_menu(){
     'title' => t('Cierre de Caja Placetopay'),
     'description' => t('This is a test for menu from payment method postpay'),
     'page callback' => 'place2pay_cierrecaja',
-    'access arguments'  => array('administer caja'),
+    'access arguments'  => array('administer cajap2p'),
     'access callback'  => 'user_access',    
     'type' => MENU_NORMAL_ITEM,
     'file' => 'place2pay.inc',
