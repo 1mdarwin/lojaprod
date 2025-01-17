@@ -15,6 +15,10 @@ body{
   background: #FFF;
   border: thin solid #eee;
 }
+.ordenanza{
+  border: 2px dashed #F00;  /* Red:rojo tramites*/
+  padding: 5px;
+ }
 .test {
   color:#036;
   border:1px solid #dbdbdb;
