@@ -1,0 +1,82 @@
+<?php
+// define('IP_VDOCS', '192.168.15.213'); // test 
+define('IP_VDOCS', '192.168.1.21'); // test 
+//define('IP_CERT', '192.168.1.227'); // PROD
+define('PORT_WS_VDOCS', ':8713'); // PROD
+// Ip desde la cual se llama al servicio
+
+define('AUTH_PARAM_VDOCS', '1103535991:Lojapp59911087'); // user:pass from test server
+// Reciben token
+
+//define('QRY_DETAILPROCESS', '/share/s/M1AnvgzxTquPQbzsFbd7Bg'); // details process
+// http://192.168.15.213:8713/ws/loja/api/solicitudDocumentos/downloadCertificate/fff666677777
+// http://192.168.15.213:8713/authenticate 
+define('QRY_VDOCS', '/gim/seam/resource/rest/queries/solvencyCertificateInfo'); // details process PROD
+define('QRY_VDOCS1', '/document-validation/api/documentsDownload/'); // GET DOCUMENT PDF PROD
+
+// NEW PARAMETERS
+define('QRY_LOGIN_VDOCS', '/authenticate'); // GET DOCUMENT PDF PROD
+define('QRY_GET_PDF_VDOCS', '/ws/loja/api/solicitudDocumentos/downloadCertificate/'); // GET DOCUMENT PDF PROD
+//define('QRY_DETAILPROCESS', '/api/documentsExternal'); // details process TEST
+//define('QRY_DOCPROCESS', '/api/documentsDownload/'); // GET DOCUMENT PDF TEST
+
+
+/**
+ * @file
+ * Web service client examples module.
+ */
+/*
+ * HOOK Help
+ */
+function validadocs_help($path, $arg){
+  $help = '';
+  switch ($path) {
+    case 'admin/help#validadocs':
+      $help = "<h1>Ayuda para Valida certificado </h1>";
+      $help .= t('This module is for get taxes from citizens</br>');
+      $help .= t('This module work with webservices, from GIM</br>');
+      $help .= t('Include payments too');
+      break;
+    
+    default:
+      # code...
+      break;
+  }  
+  return $help;
+}
+/*
+ * Implmentation HOOK Menu
+ */
+
+function validadocs_menu(){
+        // Para mantenimiento se cambia el texto a consultando, caso contrario consulta 
+  $items['validadocs/consulta'] = array(
+    'title' => t('Validar Documento Municipal'),
+    'description' => t('Validar documento con numero de documento'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('consultadoc_form'),
+    //'access arguments' => array('access content'),
+    'access callback' => true,
+    'file' => 'validadocs.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );  
+  $items['validadocs'] = array(
+    'title' => t('Descarga Archivo'),  
+    'page callback' => 'get_documento',
+    'page arguments' => array(1),
+    'access callback' => true,
+    'file' => 'validadocs.inc',
+    'type' => MENU_CALLBACK,
+);
+
+  // Renombrar para mantenimiento lo que se encuenta en los corchetes
+  /*$items['tramites/valida'] = array(
+      'title' => t('Mantenimiento del servicio'),  
+      'description' => t('Mantenimiento periodico del servicio de consulta'),
+      'page callback' => 'mantenimientos',
+      'access callback' => true,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  */
+  return $items;  
+}
