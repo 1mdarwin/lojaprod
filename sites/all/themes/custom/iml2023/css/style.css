@@ -262,6 +262,14 @@ ul.navbar-nav{
   color: #fff !important;
   display:block;
 }
+/* Semana del estudiante */
+.semes {
+  border:1px solid #4DB0DC;
+  border-radius: 10px;
+}
+.semes h2{
+  border-bottom: thin solid #dbdbdb;
+}
 
 /*----------------------------------------- 
 REGION SIDEBAR SECOND
