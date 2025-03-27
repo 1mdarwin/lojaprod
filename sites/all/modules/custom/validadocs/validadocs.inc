@@ -6,25 +6,21 @@ function consultadoc_form($form, &$form_state){
   $form['consulta'] = array(
       '#title' => t('Datos del documento Municipal'),
       '#type' => 'fieldset',
-      '#description' => t('Consulta a través de su número de documento'),
+      '#description' => t('Consulta a través de código de validación'),
   );
   $form['consulta']['numDoc'] = array(
-      '#title' => t('Número de documento'),
+      '#title' => t('Código de validación'),
       '#type' => 'textfield',
       '#required' => true,
       '#maxlenght' => 10,
       '#size' => 15,
-      '#description' => t('Ingrese su número de documento. Ej: fff666677777'),
+      '#description' => t('Ingrese su código de validación. Ej: fff666677777'),
 	); 
   $form['consulta']['captcha'] = array(
     '#type' =>  'captcha',
-    //'#captcha_type' =>  'recaptcha/reCAPTCHA',  // prod
-    '#captcha_type' =>  'captcha/Math', // test
-    //'#captcha_type' =>  'image_captcha/Image',    
+    '#captcha_type' =>  'recaptcha/reCAPTCHA',  // prod
+    // '#captcha_type' =>  'captcha/Math', // test
   );
-  //$form['#action'] = $base_url . '/consulta/res';  
-  //$form['#action'] = 'https://www.loja.gob.ec/consulta/resultado';
-  //$form['#attached']['js'] = array(drupal_get_path('module','impuestos').'/js/impuestos.js',); // desactiva javascript
   $form['consulta']['save'] = array(
       '#prefix' => '<div class="consulta">',
       '#type' => 'submit',
@@ -53,7 +49,7 @@ function consultadoc_form_submit(&$form, &$form_state){
   unset($_SESSION['dataws']);
   $_SESSION['post'] = $_POST;  
   // $_SESSION['dataws'] = get_documento($form_state['values']['numDoc']); // Get document PDF from webservice
-  $form_state['redirect'] = '/validadocs/'. $form_state['values']['numDoc'];
+  $form_state['redirect'] = '/validardocumento/'. $form_state['values']['numDoc'];
   //if(module_exists('impuestos')){
     //$form_state['redirect'] = 'consulta/res';
   //}  
