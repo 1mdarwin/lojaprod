@@ -1,7 +1,6 @@
 <?php
 // define('IP_VDOCS', '192.168.15.213'); // test 
-define('IP_VDOCS', '192.168.1.21'); // test 
-//define('IP_CERT', '192.168.1.227'); // PROD
+define('IP_VDOCS', '192.168.1.228'); //  PROD
 define('PORT_WS_VDOCS', ':8713'); // PROD
 // Ip desde la cual se llama al servicio
 
