@@ -484,6 +484,23 @@ débito, tarjeta de crédito Diners club, Discover, Visa y Mastercard de cualqui
 	  $_SESSION['ced'] = $ced;
 	  return $form;
 	}
+	/***
+	 * Valid name of predio
+	 * @param $namePredio
+	 * 	  Name of the predio
+	 *  @return TRUE or FALSE
+	 * Check if the name of predio is valid
+	 * @return TRUE if the name is valid
+	 * @return FALSE if the name is not valid
+	 * 
+	 */
+	function getValidPredio ($namePredio){
+		if ((strpos($namePredio, 'PREDI') !== false) ){
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	}
 	/**
 	* Function for validate the data before submit the results
 	*
@@ -511,8 +528,9 @@ débito, tarjeta de crédito Diners club, Discover, Visa y Mastercard de cualqui
 		if($key == 1){
 		  $pagar = TRUE;
 		}else{
-		  $ant = $dataws[$key-1]['codSer'] . $dataws[$key-1]['rubro']; //concat string with codSer and rubro items
-		  $act = $dataws[$key]['codSer'] . $dataws[$key]['rubro'];
+		  //concat string with codSer and rubro items
+		  $ant = $dataws[$key-1]['codSer'] . ($predioAnt = (getValidPredio($dataws[$key-1]['rubro']) ? 'PREDIO': $dataws[$key-1]['rubro'])); 
+		  $act = $dataws[$key]['codSer'] . ($predioAct = (getValidPredio($dataws[$key]['rubro']) ? 'PREDIO': $dataws[$key]['rubro']));
 		  
 		  if($ant == $act){
 		    if(in_array($key, $sel) && in_array($key-1, $sel)){
