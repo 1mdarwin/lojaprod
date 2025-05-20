@@ -132,6 +132,9 @@ ul.navbar-nav{
   background: #4DB0DC !important;
   color: #FFF !important;
 }
+.navbar-default .navbar-nav .open .dropdown-menu > li > a{
+  color: #fff !important;
+}
 /**
 * SOCIAL NETWORK
 */
