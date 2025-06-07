@@ -1119,6 +1119,9 @@ footer .pane-content {
      /*position: absolute;*/
      z-index: 10;
   }
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a{
+	color: #333 !important;
+  }
   #back-top {
      right: 85px !important;
   }
