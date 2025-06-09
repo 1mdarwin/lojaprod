@@ -306,7 +306,7 @@
 		}        
 		$alltaxes[$par] = array(          
 		  'codSer'  => $srvcode,
-		  'rubro'   => $query->account,
+		  'rubro'   => chgPredioName($query->account),
 		  'fInicio' => substr($query->serviceDate, 0, 10),
 		  'fFin'    => substr($query->expirationDate, 0, 10),
 		  'monto'   => $query->total,
@@ -330,7 +330,7 @@
 	      }
 	      $alltaxes[$par] = array(            
 		'codSer'  => $srvcode,
-		'rubro'   => $query[$i]->account,
+		'rubro'   => chgPredioName($query[$i]->account),
 		'fInicio' => substr($query[$i]->serviceDate, 0, 10),
 		'fFin'    => substr($query[$i]->expirationDate, 0, 10),
 		'monto'   => $query[$i]->total,
@@ -494,13 +494,31 @@ débito, tarjeta de crédito Diners club, Discover, Visa y Mastercard de cualqui
 	 * @return FALSE if the name is not valid
 	 * 
 	 */
-	function getValidPredio ($namePredio){
+	function getValidPredio($namePredio){
 		if ((strpos($namePredio, 'PREDI') !== false) ){
 			return TRUE;
 		}else{
 			return FALSE;
 		}
 	}
+	/***
+         * Change name of predio
+         * @param $namePredio
+         *        Name of the predio
+         *  @return String
+         * 
+         */
+        function chgPredioName($namePredio){
+                if ((strpos($namePredio, 'PREDI') !== false) ){
+		    if ((strpos($namePredio, 'URB') !== false) ){
+                        return "PREDIO URBANO";
+                    }else{
+			return "PREDIO RURAL";
+					}
+                }else{
+                        return $namePredio;
+                }
+        }
 	/**
 	* Function for validate the data before submit the results
 	*
