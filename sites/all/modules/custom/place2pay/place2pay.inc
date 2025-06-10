@@ -149,6 +149,22 @@ function postprocess($ipn){
         commerce_payment_redirect_pane_previous_page($order);
         break;    
 
+      case 'PARTIAL_EXPIRED':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+        $transaction->message = t("El Pago ha sido PARTIAL_EXPIRED. a: @errorcode , @errordetails", array('@errorcode' => $ipn['ERRORCODE'], '@errordetails' => $ipn['ERRORDETAILS']));
+        drupal_set_message(t($ipn['ERRORDETAILS']),'warning');
+        watchdog('place2pay','ESTADO PARTIAL_EXPIRED para cancelar en postprocess',array(),WATCHDOG_INFO);
+        commerce_payment_redirect_pane_previous_page($order);
+        break;
+
+      case 'APPROVED_PARTIAL':
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+        $transaction->message = t("El Pago ha sido APPROVED_PARTIAL. a: @errorcode , @errordetails", array('@errorcode' => $ipn['ERRORCODE'], '@errordetails' => $ipn['ERRORDETAILS']));
+        drupal_set_message(t($ipn['ERRORDETAILS']),'warning');
+        watchdog('place2pay','ESTADO APPROVED_PARTIAL para cancelar en postprocess',array(),WATCHDOG_INFO);
+        commerce_payment_redirect_pane_previous_page($order);
+        break;
+
       case 'APPROVED':
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
         $transaction->message = t('El pago ha sido APROBADO con autorización: @ac y Transaccion @txn', array('@ac' => $ipn['aut'],'@txn'=> $transaction->transaction_id));//        
@@ -331,7 +347,7 @@ function place2pay_notificacionp2p(){
 		}
 		//actualiza el registro en aprobado
   }else{
-    if($data['status']['status'] = 'REJECTED' || $data['status']['status'] = 'PENDING') {
+    if($data['status']['status'] = 'PARTIAL_EXPIRED' || $data['status']['status'] = 'APPROVED_PARTIAL' || $data['status']['status'] = 'REJECTED' || $data['status']['status'] = 'PENDING') {
       //$wrapper = entity_metadata_wrapper('commerce_order', $order);
 		  //$amount = $wrapper->commerce_order_total->amount->value();
 		  $ipn['id_order'] = $order->order_id;
