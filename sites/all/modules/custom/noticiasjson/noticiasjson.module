@@ -1,0 +1,261 @@
+<?php
+
+use PhpOffice\PhpSpreadsheet\Calculation\Database\DSum;
+
+/**
+  * HOOK_services_resources
+  */ 
+  function noticiasjson_services_resources() {
+    return array(
+      'listnoticiasjson' => array(
+        'operations' => array(
+      	   'index' => array(
+            'help'             => t('Retrieves entertainment information from operations. (custom module - festinfo)'),
+            // 'callback'         => 'fest_getHoteles',            
+            'callback'         => 'noticiasjson_page',            
+            'access callback' => 'user_access',
+            'access arguments' => array('access content'),
+            'access arguments append' => FALSE,
+            //'file'             => array('file' => 'sellers', 'module' => 'shoppistaservices'),
+            'args' => array(
+            array(
+              'name' => 'fn',
+              'type' => 'string',
+              'description' => 'Function to perform',
+              'source' => array('path' => '0'),
+              'optional' => TRUE,
+              'default' => '0',
+              ),
+            ),
+   	   ),
+        ),
+    ),
+
+    );
+  }
+
+
+function noticiasjson_menu() {
+  $items = array();
+
+  $items['noticiasjson'] = array(
+    'title' => 'Noticias JSON',
+    'page callback' => 'get_noticias',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['noticiasxml'] = array(
+    'title' => 'Noticias XML',
+    'page callback' => 'get_noticiasxml',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+function noticiasjson_page() {
+  // Define the data to be returned as JSON.
+    $today = date('YmdHis');
+    $enter[] = array(
+//         $ent->name => get_places($ent->tid),
+        "file_name" => "com.anomaa.reader.mnd",
+        "file_location" => "https:\/\/www.loja.gob.ec\/\/api\/listnoticiasjson.json",
+        "file_modification_date" => $today,
+        "content_source" => "",        
+         "items" => get_noticias()
+         
+         
+      );
+    
+    $r = new StdClass();
+    $r = (count($enter) > 0) ? $enter : NULL;
+    return $r;
+}
+/** 
+ * Function to get the latest news from the database
+ * @return array
+ * This function retrieves the latest news articles from the database, specifically from the 'story' content type.
+ * It selects the title, node ID, creation and modification dates, and associated images and body content.
+ * The results are limited to the 5 most recent articles.
+ * The function returns an array of articles, each containing details such as company information, publication details, region, section, item ID, title, body content, and associated images.
+ * The images are processed to replace the 'public://' prefix with the base URL for proper access.
+ * The function also loads the node and taxonomy term for additional context.
+ * The returned array structure is designed to be compatible with the expected JSON format for the application.
+*/
+function get_noticias() {
+    global $base_url;
+  // Define the data to be returned as JSON.
+    $query = "SELECT node.title AS node_title, node.nid AS nid, node.changed AS node_changed, 
+        node.created AS node_created, 'node' AS field_data_field_foto_story_node_entity_type, 
+        'node' AS field_data_body_node_entity_type, body.body_value as cuerpo,  
+        foto.field_foto_story_fid as fid        
+        FROM 
+        {node} node
+        INNER JOIN field_data_field_foto_story foto ON foto.entity_id = nid 
+        INNER JOIN field_data_body body ON body.entity_id = nid
+        WHERE (( (node.status = '1') AND (node.type IN  ('story')) ))
+        ORDER BY node_created DESC
+        LIMIT 20 OFFSET 0";
+    $result = db_query($query)->fetchAll();  
+    $node = node_load($result[0]->nid);     
+    // dsm($node);  
+
+    $enter = array();
+    foreach($result as $key => $ent) {                
+        $node = node_load($result[$key]->nid);        
+        // dsm($node);
+        $enter[] = array(
+        "company_id" => "20",
+        "company_name" => "Municipio de Loja", 
+        "company_name_cleaned" => "", 
+        "company_bit" => "0",
+        "publication_id" => "20",
+        "publication_app_identifier" => "com.anomaa.reader.mdl", 
+        "publication_name" => "Municipio de Loja", 
+        "publication_name_cleaned" => "",
+        "publication_bit" => "1",
+        "region_id" => "21",
+        "region_name" => "Municipio de Loja", 
+        "region_name_cleaned" => "", 
+        "region_bit" => "0",
+        "section_id" => "58", 
+        "section_name" => "Loja", 
+        "section_name_cleaned" => "", 
+        "section_bit" => "0",
+        "subsection_id" => $node->field_depen_story['und'][0]['tid'],
+        "subsection_name" => taxonomy_term_load($node->field_depen_story['und'][0]['tid'])->name,
+        "item_id" => $node->nid,
+        "item_guid" => "",
+        "item_link" => $base_url . url("node/$node->nid"),
+        "item_type" => "0",
+        "item_date_published" => date('YmdHis', $node->created),
+        "item_date_updated" => "0",
+        "item_title" => $node->title,
+        "item_title_other" => "",
+        "item_authors" => get_user(user_load($node->uid)),
+        "item_body" => "",        
+        "item_body_other" => $node->body['und'][0]['value'],
+        "item_assets" => get_image($node->field_foto_story['und'][0]),
+        );
+    }
+    $r = new StdClass();
+    $r = (count($enter) > 0) ? $enter : NULL;
+    return $r;
+
+}
+/** *
+ * Function to get the image details
+ * @param $image
+ * @return array
+ */
+function get_image($image) {
+    global $base_url;
+    $assets_info = array(
+        "width" => $image['width'],
+        "height" => $image['height'],
+        "type" => $image['filemime'],
+        "type" => "3",
+        "type_name" => pathinfo($image['filename'], PATHINFO_EXTENSION)
+    );
+    $img = new StdClass();
+    $img = (count($assets_info) > 0) ? $assets_info : NULL;
+    $enter[] = array(
+        "item_asset_id" => $image['fid'],
+        "item_asset_type" => "image",
+        "item_asset_thumbnail_url" => "",
+        "item_asset_url" => str_replace('public://', ($base_url . "/files/"), $image['uri']),
+        "item_asset_thumbnail_url_local" => "",
+        "item_asset_url_local" => "",
+        "item_asset_caption_title" => "",
+        "item_asset_caption" => "",
+        "item_asset_bit" => "0",
+        "item_asset_info" => $img
+    );
+    $r = new StdClass();
+    $r = (count($enter) > 0) ? $enter : NULL;
+    return $r;
+}
+/**
+ * Function to get user information
+ * @param $user
+ * @return array
+ */
+function get_user($user){
+   $enter[] = array(
+        "name" => $user->name,
+        "link" => "",
+        "email" => $user->mail  
+    );
+    $r = new StdClass();
+    $r = (count($enter) > 0) ? $enter : NULL;
+    return $r; 
+}
+/**
+ * Function to get the latest news in XML format
+ * @return string
+ * This function retrieves the latest news articles from the database, specifically from the 'story' content type.
+ * It selects the title, node ID, creation and modification dates, and associated images and body content.
+ * The results are limited to the 5 most recent articles.
+ * The function returns an XML formatted string containing details such as company information, publication details, region, section, item ID, title, body content, and associated images.
+ * The images are processed to replace the 'public://' prefix with the base URL for proper access.
+ * The function also loads the node and taxonomy term for additional context.
+*/
+function get_noticiasxml() {
+    global $base_url;
+  // Define the data to be returned as JSON.
+    $query = "SELECT node.title AS node_title, node.nid AS nid, node.changed AS node_changed, 
+        node.created AS node_created, 'node' AS field_data_field_foto_story_node_entity_type, 
+        'node' AS field_data_body_node_entity_type, body.body_value as cuerpo,  
+        foto.field_foto_story_fid as fid        
+        FROM 
+        {node} node
+        INNER JOIN field_data_field_foto_story foto ON foto.entity_id = nid 
+        INNER JOIN field_data_body body ON body.entity_id = nid
+        WHERE (( (node.status = '1') AND (node.type IN  ('story')) ))
+        ORDER BY node_created DESC
+        LIMIT 5 OFFSET 0";
+    $resulta = db_query($query)->fetchAll();  
+    $node = node_load($resulta[0]->nid);     
+    // dsm($node);  
+    $items = "";   
+    // Initialize the XML output with the necessary headers and opening tags
+    $output = '<?xml version="1.0" encoding="UTF-8" ?>
+                      <rss version="2.0"
+                      xmlns:content="http://purl.org/rss/1.0/modules/content/"
+                      xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+                      xmlns:dc="http://purl.org/dc/elements/1.1/"
+                      xmlns:atom="http://www.w3.org/2005/Atom"
+                      xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+                      xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+                      <channel>
+                      <title>Municipio de Loja</title>
+                      <link>https://www.loja.gob.ec/</link>
+                      <description>Municipio de Loja Noticias</description>';
+ 
+    foreach($resulta as $key => $ent) {                
+        $node = node_load($resulta[$key]->nid);        
+        $news_image = $node->field_foto_story['und'][0];
+        $url_image = str_replace('public://', ($base_url . "/files/"), $news_image['uri']);
+        $items = $items . '<item>  
+              <title><![CDATA['.$node->title.']]></title>
+              <link>'.$base_url . url("node/$node->nid").'</link>
+              <guid>'.$base_url . url("node/$node->nid").'</guid>
+              <pubDate>'.date('YmdHis', $node->created).'</pubDate>
+              <category><![CDATA['.taxonomy_term_load($node->field_depen_story['und'][0]['tid'])->name.']]></category>
+              <dc:creator><![CDATA['. user_load($node->uid)->name. ']]></dc:creator>
+              <description>
+              <![CDATA['.$node->body['und'][0]['value'].']]>
+              </description>
+              <media:content xmlns:media="http://search.yahoo.com/mrss/" url="'. $url_image .'" 
+              medium="image" type="'.$news_image['filemime'].'" 
+              width="'.$news_image['width'].'" height="'.$news_image['height'].'" />
+            </item>'; 
+        
+    }
+    
+    $output .= $items . '</channel></rss>';
+    
+    drupal_add_http_header('Content-Type', 'application/xml; charset=UTF-8');
+    print $output; 
+
+}
