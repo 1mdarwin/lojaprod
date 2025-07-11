@@ -218,7 +218,7 @@ function place2pay_process(){
     $orderid = arg(1); //get first parameter from URL
     $query = db_query('SELECT * from place2pay WHERE order_id = :orderid ORDER BY fecha DESC',array(':orderid' => $orderid))->fetchAll();
 //    dsm($query);
-    if($query[0]->estado == 'REJECTED'){
+    if($query[0]->estado == 'REJECTED' || $query[0]->estado == 'PARTIAL_EXPIRED' || $query[0]->estado == 'APPROVED_PARTIAL'){
       $msg = 'El proceso de pago ha sido RECHAZADO';
       $msg .= '<ul><li>Referencia: '.$orderid;
       $msg .= '</li><li>Número de petición: '.$query[0]->requestId .'</li></ul>';

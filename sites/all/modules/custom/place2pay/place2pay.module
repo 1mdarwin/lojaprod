@@ -275,7 +275,8 @@ function place2pay_form_commerce_checkout_form_alter(&$form, &$form_state) {
           //module_load_include('inc','place2pay','place2pay');
           $query = db_query('SELECT * from place2pay WHERE order_id = :orderid ORDER BY fecha DESC',array(':orderid' => $orderid))->fetchAll();
           if (sizeof($query) > 0){ // Check if exist transaction for order ID
-             if($query[0]->estado == 'REJECTED'){ // When the user cancel the payment redirect
+            // When the user cancel the payment redirect
+	    if($query[0]->estado == 'REJECTED' || $query[0]->estado == 'PARTIAL_EXPIRED' || $query[0]->estado == 'APPROVED_PARTIAL'){
               $path = $base_url . '/place2pay/'. $orderid .'/fail';
               drupal_goto($path);
             }
