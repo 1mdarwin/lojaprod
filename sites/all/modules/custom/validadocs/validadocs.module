@@ -4,7 +4,7 @@ define('IP_VDOCS', '192.168.1.228'); //  PROD
 define('PORT_WS_VDOCS', ':8713'); // PROD
 // Ip desde la cual se llama al servicio
 
-define('AUTH_PARAM_VDOCS', '1103535991:Lojapp59911087'); // user:pass from test server
+define('AUTH_PARAM_VDOCS', '9G4u8q0GnXBkNY7LCBuF:ULdI1c8qukgxcjANqIwh'); // user:pass from test server
 // Reciben token
 
 // http://192.168.15.213:8713/ws/loja/api/solicitudDocumentos/downloadCertificate/fff666677777
