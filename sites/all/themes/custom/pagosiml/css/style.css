@@ -115,7 +115,7 @@ h3{
 
 ul.navbar-nav{
   margin-top: 10px;
-  background:#BD1622;
+  background: #426CA4;
   margin-right:130px;
 }
 .navbar-nav>li{
@@ -319,12 +319,12 @@ li.media{
   display:inline;
 }
 .panel-heading{
-  background: #BD1622 !important;
+  background: #426CA4 !important;
   color:#FFF !important;
 }
 .btn-default{
   color:#FFF;
-  background-color: #BD1622;
+  background-color: #426CA4;
 }
 .totalremision{
   text-align:right;
@@ -438,7 +438,7 @@ table caption{
 }
 table th{
   /*background: url('../images/bg_th2.jpg') no-repeat scroll right #269abc;*/
-  background: #BD1622; /* For browsers that do not support gradients */  
+  background: #426CA4; /* For browsers that do not support gradients */  
   color: #FFF;
   padding: 0 5px;
   height: 40px;
@@ -499,11 +499,13 @@ ul.flippy{
   color:#fff !important;
 }
 .field-type-taxonomy-term-reference{
-  background: #268bc6;
+  background: #426CA4;
   border-radius: 5px;
   padding-left: 10px
 }
-
+.field-name-field-organiza-ev label{
+  color:#FFF;
+}
 .noticias h2{  
   background: url('../images/noticias.png')no-repeat scroll 0 0 transparent;
   padding-left: 50px;
@@ -1064,7 +1066,7 @@ footer .pane-content {
     padding-bottom:40.25%;
   }
   .mainmenu{
-    background: #BD1622;
+    background: #426CA4;
   }
   .searchbox{
     top: 100px;
