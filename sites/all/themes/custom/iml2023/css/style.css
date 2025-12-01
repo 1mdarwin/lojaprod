@@ -833,6 +833,14 @@ a:hover{
 .view-tramites-populares .item-list, .online{
    border-bottom:thin dashed #dbdbdb;
 }
+.servicesonline{
+   border-bottom:thin dashed #dbdbdb;
+   padding-bottom: 25px;
+}
+.servicesonline a{
+   font-weight:500;
+   font-size:1.3em;
+}
 /**
 * COMMENTS
 */
