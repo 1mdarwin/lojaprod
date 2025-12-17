@@ -343,7 +343,7 @@ function get_htmlformat_ktastro($data, $pdf){
 
   $tktastro .= '</table>';
   //$tktastro .= '<watermarkimage src="sites/all/modules/custom/payclub/logo.png" alpha="0.4" size="200,250" />';
-  $tktastro .= '<div><strong>VÁLIDO PARA EL BIENIO 2024-2024</strong></div></br>';
+  $tktastro .= '<div><strong>VÁLIDO PARA EL BIENIO 2024-2025</strong></div></br>';
     
   if(!$pdf){
     $tktastro .= '<a class="goback" href="javascript:history.go(-1)">[Regresar]</a><div class="nuevacon"><a class="nueva" href="'.$base_url.'/ktastro/consulta">Nueva Consulta</a></div>';
