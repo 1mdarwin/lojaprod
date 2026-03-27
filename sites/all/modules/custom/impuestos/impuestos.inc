@@ -576,8 +576,8 @@ débito, tarjeta de crédito Diners club, Discover, Visa y Mastercard de cualqui
 	 
 	    // The payment only can do it between 08 and 17 hours with thirty minutes
 	     //if (!($fechahora > "08:00:00" && $fechahora < "17:30:00")){
-	     if (!($fechahora > "07:30:00" && $fechahora < "23:55:00")){
-	      form_set_error("taxes","El horario de pago es de 01H00 a 23H55");
+	     if (!($fechahora > "07:00:00" && $fechahora < "17:00:00")){
+	      form_set_error("taxes","El horario de pago es de 07H00 a 17H00");
     }
     if(user_is_anonymous()){ //Check if the user is anonymous and ask register
       form_set_error("taxes","Debe <a class='registro' href='https://www.loja.gob.ec/user/register'>registrarse</a> e ingresar al sitio para poder efectuar pagos. Si ya dispone de una cuenta <a class='registro' href='https://www.loja.gob.ec/user'>ingrese al sitio</a>");
