@@ -327,3 +327,51 @@ function cierreanio(){
 	$mensaje  = variable_get('message','Suspendido');	
 	return $mensaje;
 }
+/**
+ * Implementación de hook_cron para realizar tareas de mantenimiento periódicas, como el cierre de año.
+ * Este hook se ejecutará automáticamente según la configuración de cron de Drupal, permitiendo realizar acciones como la suspensión temporal del servicio de consulta de impuestos durante el cierre de año.
+ * 
+*/
+function impuestos_cron() {
+  $intervalo = 3600; // Ejecutar máximo cada 1 hora
+  $ultima_ejecucion = variable_get('impuestos_cron_last', 0);
+
+  if (REQUEST_TIME - $ultima_ejecucion < $intervalo) {
+    return; // Salir si no ha pasado suficiente tiempo
+  }
+
+  variable_set('impuestos_cron_last', REQUEST_TIME);
+
+// Obtener la fecha actual y hora en la zona horaria configurada  
+  $timezone = variable_get('date_default_timezone', 'GMT-5');
+  $date = new DateTimeZone($timezone);
+  $now = new DateTime('now', $date);
+
+  $dia_semana = (int) $now->format('N'); // 1=Lun ... 6=Sáb, 7=Dom
+  $hora_actual = (int) $now->format('G'); // Hora en formato 0-23
+
+  $debe_estar_activo = FALSE;
+
+  // Sábado (6) desde las 12:00 en adelante
+  if ($dia_semana === 6 && $hora_actual >= 12) {
+    $debe_estar_activo = TRUE;
+  }  
+
+  // Domingo (7) todo el día
+  if ($dia_semana === 7) {
+    $debe_estar_activo = TRUE;
+  }
+
+  $estado_actual = (bool) variable_get('payments_all', 0);
+
+  // Solo actualizar si hay un cambio real de estado
+  if ($debe_estar_activo !== $estado_actual) {
+    variable_set('payments_all', (int) $debe_estar_activo);
+
+    $mensaje = $debe_estar_activo
+      ? 'impuestos: checkbox Pagos administrador activado automáticamente por cron.'
+      : 'impuestos: checkbox desactivado automáticamente por cron.';
+
+    watchdog('impuestos', $mensaje, array(), WATCHDOG_INFO);
+  }
+}
